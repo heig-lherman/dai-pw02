@@ -95,7 +95,7 @@ public class GameManager implements ChessController {
      * @param to    The destination
      * @return True if the move is valid, false otherwise
      */
-    private boolean movePreconditions(ChessPiece piece, Point to) {
+    protected boolean movePreconditions(ChessPiece piece, Point to) {
         return null != piece
                 && !piece.getPos().equals(to)
                 && piece.getPlayerColor().equals(playerTurn())
@@ -136,7 +136,7 @@ public class GameManager implements ChessController {
         displayMessages(checkMate, check, stalemate, impossibleToCheckMate);
 
         if (!checkMate && !impossibleToCheckMate && !stalemate) {
-            turn++;
+            updatePlayerTurn();
         }
 
         postGameActions(checkMate, stalemate, impossibleToCheckMate);
@@ -592,5 +592,9 @@ public class GameManager implements ChessController {
      */
     protected PlayerColor playerTurn() {
         return turn % 2 == 0 ? PlayerColor.WHITE : PlayerColor.BLACK;
+    }
+
+    protected void updatePlayerTurn() {
+        turn++;
     }
 }
