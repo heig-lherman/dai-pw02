@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * Class representing the game engine used to control a chess game from the beginning to the end.
+ *
  * @author Vicky Butty
  * @author Loïc Herman
  * @author Massimo Stefani
@@ -373,11 +374,11 @@ public class GameManager implements ChessController {
         List<List<ChessPiece>> allPieces = board.getAllPieces();
         for (PlayerColor color : PlayerColor.values()) {
             if (allPieces.get(color.ordinal()).size() == 1) {
-                if(allPieces.get(color.opposite().ordinal()).size() == 1) {
+                if (allPieces.get(color.opposite().ordinal()).size() == 1) {
                     return true;
                 }
 
-                if(allPieces.get(color.opposite().ordinal()).size() > 1) {
+                if (allPieces.get(color.opposite().ordinal()).size() > 1) {
                     return false;
                 }
 
