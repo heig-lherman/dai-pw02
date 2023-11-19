@@ -1,6 +1,8 @@
 package heig.dai.pw02.command;
 
 import java.util.concurrent.Callable;
+
+import heig.dai.pw02.socket.SocketManager;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -38,11 +40,13 @@ public class ClientCommand implements Callable<Integer> {
             description = "enable the use of a GUI to play the game"
     )
     private boolean useGui;
+    private SocketManager socketManager;
 
     @Override
     public Integer call() throws Exception {
         log.trace("Starting client");
         log.trace("Connecting to {}:{}", ipAddress, port);
+        socketManager = new SocketManager(ipAddress, port);
         return 0;
     }
 }
