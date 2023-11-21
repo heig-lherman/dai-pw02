@@ -34,6 +34,6 @@ public class GuiAssets {
     }
 
     private static BufferedImage assetsImage(String imageName) throws IOException {
-        return ImageIO.read(GuiAssets.class.getResource("images/" + imageName));
+        return ImageIO.read(GuiAssets.class.getResource("/images/" + imageName));
     }
 }

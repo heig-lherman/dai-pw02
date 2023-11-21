@@ -2,11 +2,21 @@ package heig.dai.pw02.command;
 
 import java.util.concurrent.Callable;
 
+import heig.dai.pw02.ccp.CCPEntity;
+import heig.dai.pw02.ccp.OnlineGameManager;
 import heig.dai.pw02.socket.SocketManager;
+import heig.poo.chess.ChessController;
+import heig.poo.chess.ChessView;
+import heig.poo.chess.PlayerColor;
+import heig.poo.chess.engine.GameManager;
+import heig.poo.chess.views.console.ConsoleView;
+import heig.poo.chess.views.gui.GUIView;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+
+import javax.swing.text.html.parser.Entity;
 
 /**
  * Command to start a client to play chess
@@ -43,10 +53,11 @@ public class ClientCommand implements Callable<Integer> {
     private SocketManager socketManager;
 
     @Override
-    public Integer call() throws Exception {
-        log.trace("Starting client");
-        log.trace("Connecting to {}:{}", ipAddress, port);
-        socketManager = new SocketManager(ipAddress, port);
+    public Integer call() {
+        // Create socketManager, get color
+        OnlineGameManager controller = new OnlineGameManager();
+        ChessView view = useGui ? new GUIView(controller) : new ConsoleView(controller);
+        controller.start(view, CCPEntity.CLIENT, PlayerColor.WHITE);
         return 0;
     }
 }
