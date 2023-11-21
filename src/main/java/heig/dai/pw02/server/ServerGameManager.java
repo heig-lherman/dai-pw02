@@ -1,15 +1,19 @@
-package heig.dai.pw02.ccp;
+package heig.dai.pw02.server;
 
+import heig.dai.pw02.ccp.CCPEntity;
+import heig.dai.pw02.server.PlayerHandler;
 import heig.poo.chess.ChessView;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.util.Assertions;
 
-import java.util.List;
+public final class ServerGameManager extends GameManager {
 
-public class OnlineGameManager extends GameManager {
-    private List<PlayerColor> players;
-    private CCPEntity entity;
+    private final PlayerPair players;
+
+    public ServerGameManager(PlayerPair players) {
+        this.players = players;
+    }
 
     @Override
     public void start(ChessView view) {
