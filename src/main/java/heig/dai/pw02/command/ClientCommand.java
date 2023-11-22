@@ -1,10 +1,12 @@
 package heig.dai.pw02.command;
 
 import java.util.concurrent.Callable;
+
 import lombok.extern.slf4j.Slf4j;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+
+import javax.swing.text.html.parser.Entity;
 
 /**
  * Command to start a client to play chess
@@ -40,9 +42,7 @@ public class ClientCommand implements Callable<Integer> {
     private boolean useGui;
 
     @Override
-    public Integer call() throws Exception {
-        log.trace("Starting client");
-        log.trace("Connecting to {}:{}", ipAddress, port);
+    public Integer call() {
         return 0;
     }
 }

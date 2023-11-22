@@ -10,6 +10,9 @@ import heig.poo.chess.engine.util.Assertions;
 public final class ServerGameManager extends GameManager {
 
     private final PlayerPair players;
+    private CCPEntity entity;
+    private PlayerColor myColor;
+    private PlayerColor playerTurn;
 
     public ServerGameManager(PlayerPair players) {
         this.players = players;
@@ -21,51 +24,50 @@ public final class ServerGameManager extends GameManager {
         super.start(view);
     }
 
-    public void start(ChessView view, CCPEntity entity) {
+    public void start(ChessView view, CCPEntity entity, PlayerColor color) {
         Assertions.assertNotNull(entity, "Entity cannot be null");
         this.entity = entity;
+        if (entity == CCPEntity.CLIENT) {
+            this.myColor = color;
+        }
+        this.playerTurn = color == PlayerColor.WHITE ? color : color.opposite();
         this.start(view);
     }
 
     @Override
     public boolean move(int fromX, int fromY, int toX, int toY) {
+        PlayerColor colorMoving = super.board.getPiece(fromX, fromY).getPlayerColor();
+        if (entity == CCPEntity.CLIENT && (colorMoving != myColor || playerTurn() != colorMoving)) {
+            return false;
+        }
         boolean result = super.move(fromX, fromY, toX, toY);
         if (result) {
             switch (entity) {
                 case SERVER:
-                    // Envoi du message MOVE
-                    updatePlayerTurn();
+                    System.out.println(colorMoving + " has moved");
+                    System.out.println("Move sent to player " + playerTurn());
+                    System.out.println("Waiting for player " + playerTurn() + " to move");
                     break;
                 case CLIENT:
-                    // Envoi du message MOVE
+                    System.out.println("Move sent to server");
                     break;
             }
             return true;
         }else {
             if (entity == CCPEntity.SERVER) {
-                // Envoi du message ERROR
+                System.out.println("Invalid move");
             }
+            return false;
         }
-        // Move pas valide, ressayer
-        return false;
     }
 
     @Override
     protected PlayerColor playerTurn() {
-        if (entity == CCPEntity.SERVER) {
-            return super.playerTurn();
-        }
-        if (entity == CCPEntity.CLIENT) {
-            // Ask server for player turn
-        }
-        return null;
+        return playerTurn;
     }
 
     @Override
     protected void updatePlayerTurn() {
-        if (entity == CCPEntity.SERVER) {
-            super.updatePlayerTurn();
-            // Envoi du message YOURTURN
-        }
+        playerTurn = playerTurn.opposite();
     }
 }

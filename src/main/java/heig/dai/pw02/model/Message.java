@@ -16,6 +16,6 @@ public final class Message {
     }
 
     public static Message parse(String socketMessage) {
-        return
+        return null;
     }
 }
