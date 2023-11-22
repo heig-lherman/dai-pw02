@@ -10,9 +10,6 @@ import heig.poo.chess.engine.util.Assertions;
 public final class ServerGameManager extends GameManager {
 
     private final PlayerPair players;
-    private CCPEntity entity;
-    private PlayerColor myColor;
-    private PlayerColor playerTurn;
 
     public ServerGameManager(PlayerPair players) {
         this.players = players;
@@ -20,54 +17,36 @@ public final class ServerGameManager extends GameManager {
 
     @Override
     public void start(ChessView view) {
-        Assertions.assertNotNull(entity, "Entity cannot be null");
         super.start(view);
-    }
-
-    public void start(ChessView view, CCPEntity entity, PlayerColor color) {
-        Assertions.assertNotNull(entity, "Entity cannot be null");
-        this.entity = entity;
-        if (entity == CCPEntity.CLIENT) {
-            this.myColor = color;
-        }
-        this.playerTurn = color == PlayerColor.WHITE ? color : color.opposite();
-        this.start(view);
+        listenToPlayers();
     }
 
     @Override
     public boolean move(int fromX, int fromY, int toX, int toY) {
         PlayerColor colorMoving = super.board.getPiece(fromX, fromY).getPlayerColor();
-        if (entity == CCPEntity.CLIENT && (colorMoving != myColor || playerTurn() != colorMoving)) {
-            return false;
-        }
-        boolean result = super.move(fromX, fromY, toX, toY);
-        if (result) {
-            switch (entity) {
-                case SERVER:
-                    System.out.println(colorMoving + " has moved");
-                    System.out.println("Move sent to player " + playerTurn());
-                    System.out.println("Waiting for player " + playerTurn() + " to move");
-                    break;
-                case CLIENT:
-                    System.out.println("Move sent to server");
-                    break;
-            }
+        if (super.move(fromX, fromY, toX, toY)) {
+            System.out.println(colorMoving + " has moved");
+            System.out.println("Move sent to player " + playerTurn());
+            System.out.println("Waiting for player " + playerTurn() + " to move");
             return true;
         }else {
-            if (entity == CCPEntity.SERVER) {
-                System.out.println("Invalid move");
-            }
+            System.out.println("Invalid move");
             return false;
         }
     }
 
-    @Override
-    protected PlayerColor playerTurn() {
-        return playerTurn;
+    private void listenToPlayers() {
+        while (player.isRunning()) {
+            CCPEntity message = player.receiveMessage();
+            if (message.type().equals(CCPMessage.MOVE)) {
+                String[] arguments = message.arguments();
+                int fromX = Integer.parseInt(arguments[0]);
+                int fromY = Integer.parseInt(arguments[1]);
+                int toX = Integer.parseInt(arguments[2]);
+                int toY = Integer.parseInt(arguments[3]);
+                move(fromX, fromY, toX, toY);
+            }
+        }
     }
 
-    @Override
-    protected void updatePlayerTurn() {
-        playerTurn = playerTurn.opposite();
-    }
 }

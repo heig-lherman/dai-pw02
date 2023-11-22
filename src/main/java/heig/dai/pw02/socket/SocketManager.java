@@ -1,27 +1,25 @@
 package heig.dai.pw02.socket;
 
+import heig.dai.pw02.model.Message;
+
 import java.io.*;
 import java.net.Socket;
 
 public class SocketManager {
-    private final String ipAddress;
-    private final int port;
     private final Socket socket;
     private final BufferedReader input;
     private final BufferedWriter output;
     private final static String EOT = "\u0004";
+    private final static String BREAK = "\n";
 
-    public SocketManager(String ipAddress, int port) throws IOException {
-        this.port = port;
-        this.ipAddress = ipAddress;
-        this.socket = createSocket(ipAddress, port);
-        this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-        this.output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
-
-    }
-
-    private Socket createSocket(String ipAddress, int port) throws IOException {
-        return new Socket(ipAddress, port);
+    public SocketManager(Socket socket) {
+        this.socket = socket;
+        try {
+            this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+            this.output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isConnected() {
@@ -35,18 +33,21 @@ public class SocketManager {
         this.output.close();
     }
 
-    public void send(String message) throws IOException {
-        // Maybe make a MessageBuilder class to build messages ?
-        this.output.write(message);
-        this.output.flush();
-    }
-
-    public void read() throws IOException {
-        // Maybe fixed size messages ?
-        String line;
-        while ((line = input.readLine()) != null && !line.equals(EOT)) {
-            // Do something with the message
+    public void send(Message message) {
+        try{
+            this.output.write(message.toString() + BREAK);
+            this.output.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
+    public Message read(){
+        try{
+            String line = input.readLine();
+            return Message.parse(line);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

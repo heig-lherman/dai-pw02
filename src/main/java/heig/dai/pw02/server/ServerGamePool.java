@@ -1,5 +1,10 @@
 package heig.dai.pw02.server;
 
+import heig.poo.chess.ChessView;
+import heig.poo.chess.PlayerColor;
+import heig.poo.chess.views.console.ConsoleView;
+import heig.poo.chess.views.gui.GUIView;
+
 import java.net.Socket;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -29,13 +34,15 @@ public final class ServerGamePool {
     public synchronized CompletableFuture<?> handleIncomingPlayer(Socket playerConnection) {
         PlayerHandler playerHandler = new PlayerHandler(playerConnection);
         playerQueue.add(playerHandler);
-        if (playerQueue.size() >= 2) {
+        if (playerQueue.size() >= 1) {
             var pair = new PlayerPair(
                     playerQueue.poll(),
                     playerQueue.poll()
             );
-
-            var gameManager = new ServerGameManager(pair);
+            pair.sendColors();
+            ServerGameManager gameManager = new ServerGameManager(pair);
+            ChessView view = new ConsoleView(gameManager);
+            gameManager.start(view);
         }
 
         return CompletableFuture.runAsync(playerHandler, threadPool);
