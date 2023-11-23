@@ -4,6 +4,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import heig.dai.pw02.command.ClientCommand;
 import heig.dai.pw02.command.ServerCommand;
+import heig.poo.chess.ChessController;
+import heig.poo.chess.ChessView;
+import heig.poo.chess.views.console.ConsoleView;
+import heig.poo.chess.views.gui.GUIView;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -60,7 +64,6 @@ public class ChessCli implements Runnable {
      * @param args arguments that will be parsed by picocli
      */
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new ChessCli()).execute(args);
-        System.exit(exitCode);
+        new CommandLine(new ChessCli()).execute(args);
     }
 }
