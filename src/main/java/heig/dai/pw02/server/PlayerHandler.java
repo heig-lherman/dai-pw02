@@ -3,8 +3,10 @@ package heig.dai.pw02.server;
 import heig.dai.pw02.ccp.CCPMessage;
 import heig.dai.pw02.model.Message;
 import heig.dai.pw02.socket.SocketManager;
-import heig.poo.chess.PlayerColor;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -24,6 +26,19 @@ public class PlayerHandler implements Runnable {
 
     public void sendMessage(Message message) {
         socketManager.send(message);
+    }
+
+    public Message receiveMessage() {
+        return socketManager.read();
+    }
+
+    public Message receiveMove() {
+        Message message = receiveMessage();
+        return message.type().equals(CCPMessage.MOVE) ? message : null;
+    }
+
+    public void sendMove(int fromX, int fromY, int toX, int toY) {
+        sendMessage(new Message(CCPMessage.MOVE, fromX + " " + fromY + " " + toX + " " + toY));
     }
 
     @Override

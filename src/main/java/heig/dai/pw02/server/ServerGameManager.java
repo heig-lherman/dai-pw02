@@ -1,6 +1,7 @@
 package heig.dai.pw02.server;
 
 import heig.dai.pw02.ccp.CCPEntity;
+import heig.dai.pw02.model.Message;
 import heig.dai.pw02.server.PlayerHandler;
 import heig.poo.chess.ChessView;
 import heig.poo.chess.PlayerColor;
@@ -15,14 +16,33 @@ public final class ServerGameManager extends GameManager {
         this.players = players;
     }
 
-    @Override
-    public void start(ChessView view) {
-        super.start(view);
-        listenToPlayers();
+    private void listenToPlayer() {
+        while (true) {
+            PlayerHandler player = players.get(playerTurn());
+            Message message = player.receiveMove();
+            String[] splitedArgs = message.arguments().split(" ");
+            remoteMove(
+                    Integer.parseInt(splitedArgs[0]),
+                    Integer.parseInt(splitedArgs[1]),
+                    Integer.parseInt(splitedArgs[2]),
+                    Integer.parseInt(splitedArgs[3])
+            );
+            PlayerHandler otherPlayer = players.get(playerTurn());
+            otherPlayer.sendMove(
+                    Integer.parseInt(splitedArgs[0]),
+                    Integer.parseInt(splitedArgs[1]),
+                    Integer.parseInt(splitedArgs[2]),
+                    Integer.parseInt(splitedArgs[3]));
+        }
     }
 
     @Override
-    public boolean move(int fromX, int fromY, int toX, int toY) {
+    public void start(ChessView view) {
+        super.start(view);
+        listenToPlayer();
+    }
+
+    public boolean remoteMove(int fromX, int fromY, int toX, int toY) {
         PlayerColor colorMoving = super.board.getPiece(fromX, fromY).getPlayerColor();
         if (super.move(fromX, fromY, toX, toY)) {
             System.out.println(colorMoving + " has moved");
@@ -35,18 +55,8 @@ public final class ServerGameManager extends GameManager {
         }
     }
 
-    private void listenToPlayers() {
-        while (player.isRunning()) {
-            CCPEntity message = player.receiveMessage();
-            if (message.type().equals(CCPMessage.MOVE)) {
-                String[] arguments = message.arguments();
-                int fromX = Integer.parseInt(arguments[0]);
-                int fromY = Integer.parseInt(arguments[1]);
-                int toX = Integer.parseInt(arguments[2]);
-                int toY = Integer.parseInt(arguments[3]);
-                move(fromX, fromY, toX, toY);
-            }
-        }
+    @Override
+    public boolean move(int fromX, int fromY, int toX, int toY) {
+        return false;
     }
-
 }

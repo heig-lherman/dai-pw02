@@ -55,7 +55,7 @@ public class ClientCommand implements Callable<Integer> {
         }
         ServerHandler player = new ServerHandler(socket);
         ClientGameManager controller = new ClientGameManager();
-        ChessView view = useGui ? new GUIView(controller) : new ConsoleView(controller);
+        ChessView view = useGui ? new GUIView(controller, "Client") : new ConsoleView(controller);
         controller.start(view, player);
         return 0;
     }

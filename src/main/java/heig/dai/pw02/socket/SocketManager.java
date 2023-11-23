@@ -26,6 +26,10 @@ public class SocketManager {
         return this.socket.isConnected();
     }
 
+    public InputStream getInputStream() throws IOException {
+        return this.socket.getInputStream();
+    }
+
     public void closeSocket() throws IOException {
         this.socket.close();
         this.input.close();

@@ -18,6 +18,6 @@ public record PlayerPair(
 
     public void sendColors() {
         white.sendMessage(new Message(CCPMessage.COLOR, PlayerColor.WHITE.toString()));
-        //black.sendMessage(new Message(CCPMessage.COLOR, PlayerColor.BLACK.toString()));
+        black.sendMessage(new Message(CCPMessage.COLOR, PlayerColor.BLACK.toString()));
     }
 }

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class GUIView extends BaseView<ImageIcon> {
+    private String title = "HEIG-VD Chess";
 
     private static class PieceResource implements DrawableResource<ImageIcon> {
 
@@ -103,10 +104,15 @@ public class GUIView extends BaseView<ImageIcon> {
         clearView();
     }
 
+    public GUIView(ChessController controller, String title){
+        this(controller);
+        this.title = title;
+    }
+
     @Override
     public void startView() {
         Runnable r = () -> {
-            JFrame f = new JFrame("HEIG-VD Chess");
+            JFrame f = new JFrame(title);
             f.add(gui);
             // Ensures JVM closes after frame(s) closed and
             // all non-daemon threads are finished
