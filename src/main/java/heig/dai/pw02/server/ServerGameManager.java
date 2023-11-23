@@ -14,26 +14,7 @@ public final class ServerGameManager extends GameManager {
 
     public ServerGameManager(PlayerPair players) {
         this.players = players;
-    }
-
-    private void listenToPlayer() {
-        while (true) {
-            PlayerHandler player = players.get(playerTurn());
-            Message message = player.receiveMove();
-            String[] splitedArgs = message.arguments().split(" ");
-            remoteMove(
-                    Integer.parseInt(splitedArgs[0]),
-                    Integer.parseInt(splitedArgs[1]),
-                    Integer.parseInt(splitedArgs[2]),
-                    Integer.parseInt(splitedArgs[3])
-            );
-            PlayerHandler otherPlayer = players.get(playerTurn());
-            otherPlayer.sendMove(
-                    Integer.parseInt(splitedArgs[0]),
-                    Integer.parseInt(splitedArgs[1]),
-                    Integer.parseInt(splitedArgs[2]),
-                    Integer.parseInt(splitedArgs[3]));
-        }
+        this.players.sendColors();
     }
 
     @Override
@@ -52,6 +33,17 @@ public final class ServerGameManager extends GameManager {
         }else {
             System.out.println("Invalid move");
             return false;
+        }
+    }
+
+    private void listenToPlayer() {
+        while (true) {
+            PlayerHandler player = players.get(playerTurn());
+            Message message = player.receiveMove();
+            Integer[] parsedArgs = Message.parseArgumentsToInt(message);
+            remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+            PlayerHandler otherPlayer = players.get(playerTurn());
+            otherPlayer.sendMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
         }
     }
 

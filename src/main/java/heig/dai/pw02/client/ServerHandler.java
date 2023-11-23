@@ -1,13 +1,14 @@
 package heig.dai.pw02.client;
 
 import heig.dai.pw02.ccp.CCPMessage;
+import heig.dai.pw02.ccp.CPPHandler;
 import heig.dai.pw02.model.Message;
 import heig.dai.pw02.socket.SocketManager;
 import heig.poo.chess.PlayerColor;
 
 import java.net.Socket;
 
-public class ServerHandler {
+public class ServerHandler implements CPPHandler {
     private final SocketManager socketManager;
     public ServerHandler(
             Socket playerConnection
@@ -29,11 +30,11 @@ public class ServerHandler {
         return message.type().equals(CCPMessage.MOVE) ? message : null;
     }
 
-    private void sendMessage(Message message) {
+    public void sendMessage(Message message) {
         socketManager.send(message);
     }
 
-    private Message receiveMessage() {
+    public Message receiveMessage() {
         return socketManager.read();
     }
 }

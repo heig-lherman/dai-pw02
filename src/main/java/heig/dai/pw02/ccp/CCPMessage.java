@@ -3,7 +3,7 @@ package heig.dai.pw02.ccp;
 import java.util.List;
 
 public enum CCPMessage {
-    HELLO, COLOR, OK, MOVE, YOURTURN, STALEMATE, CHECKMATE, NOMATERIAL, ERROR;
+    COLOR, MOVE, PROMOTION, ERROR;
 
     List<CCPEntity> entities;
 
