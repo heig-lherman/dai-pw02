@@ -1,8 +1,10 @@
 package heig.dai.pw02.server;
 
 import heig.dai.pw02.ccp.CCPMessage;
+import heig.dai.pw02.ccp.CPPHandler;
 import heig.dai.pw02.model.Message;
 import heig.dai.pw02.socket.SocketManager;
+import heig.poo.chess.PlayerColor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +14,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PlayerHandler implements Runnable {
+public class PlayerHandler implements Runnable, CPPHandler {
 
     private final SocketManager socketManager;
     private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
@@ -22,6 +24,10 @@ public class PlayerHandler implements Runnable {
             Socket playerConnection
     ) {
         this.socketManager = new SocketManager(playerConnection);
+    }
+
+    public void sendColor(PlayerColor color) {
+        sendMessage(new Message(CCPMessage.COLOR, color.toString()));
     }
 
     public void sendMessage(Message message) {

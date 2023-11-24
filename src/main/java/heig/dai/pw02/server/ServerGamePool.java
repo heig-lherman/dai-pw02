@@ -41,7 +41,6 @@ public final class ServerGamePool {
                     playerQueue.poll(),
                     playerQueue.poll()
             );
-            pair.sendColors();
             ServerGameManager gameManager = new ServerGameManager(pair);
             ChessView view = new GUIView(gameManager, "Server");
             gameManager.start(view);
