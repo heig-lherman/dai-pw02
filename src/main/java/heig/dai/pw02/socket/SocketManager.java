@@ -41,6 +41,7 @@ public class SocketManager {
         try{
             this.output.write(message.toString() + BREAK);
             this.output.flush();
+            System.out.println("Sent: " + message.toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -49,6 +50,7 @@ public class SocketManager {
     public Message read(){
         try{
             String line = input.readLine();
+            System.out.println("Received: " + line);
             return Message.parse(line);
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -6,12 +6,14 @@ import java.util.List;
 
 public record Message(CCPMessage type, String arguments) {
 
+
     @Override
     public String toString() {
         return switch (type) {
             case COLOR -> "COLOR " + arguments;
             case MOVE -> "MOVE " + arguments;
             case PROMOTION -> "PROMOTION " + arguments;
+            case REPLAY -> "REPLAY " + arguments;
             case ERROR -> "ERROR";
             default -> throw new RuntimeException("Unknown message type");
         };

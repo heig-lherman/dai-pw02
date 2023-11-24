@@ -2,13 +2,12 @@ package heig.dai.pw02.client;
 
 import heig.dai.pw02.model.Message;
 import heig.poo.chess.ChessView;
+import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.Assertions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class ClientGameManager extends GameManager {
@@ -41,9 +40,9 @@ public class ClientGameManager extends GameManager {
             return false;
         }
         if (remoteMove(fromX, fromY, toX, toY)) {
-            server.sendMove(fromX, fromY, toX, toY);
-            Thread thread = new Thread(this::listenMove);
-            thread.start();
+            server.addMoveToStack(fromX, fromY, toX, toY);
+            new Thread(this::listenMove).start();
+            server.sendStack();
             return true;
         }else {
             System.out.println("Invalid move");
@@ -51,7 +50,50 @@ public class ClientGameManager extends GameManager {
         }
     }
 
+    @Override
+    protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
+        ChessPiece movingPiece = super.board.getPiece(options[0].getX(), options[0].getY());
+        if (Objects.isNull(movingPiece)) {
+            return null;
+        }
+        if (movingPiece.getPlayerColor() == myColor) {
+            ChessPiece choice = super.askUserForPromotion(header, question, options);
+            server.addPromotionToStack(choice);
+            return choice;
+        }
+        System.out.println(header);
+        System.out.println(question);
+        Message message = server.receivePromotion();
+        String[] parsedArgs = message.arguments().split(" ");
+        PieceType pieceType = PieceType.valueOf(parsedArgs[0]);
+        int x = Integer.parseInt(parsedArgs[1]);
+        int y = Integer.parseInt(parsedArgs[2]);
+        for (ChessPiece piece : options) {
+            if (piece.getPieceType() == pieceType && piece.getX() == x && piece.getY() == y) {
+                return piece;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    protected ChessView.UserChoice askUserToPlayAgain(String header, String question, ChessView.UserChoice[] choices) {
+        System.out.println(header);
+        System.out.println(question);
+        ChessView.UserChoice choice = super.askUserToPlayAgain(header, question, choices);
+        server.addReplayToStack(choice.textValue());
+        return choice;
+    }
+
+    protected void postGameActions(boolean checkMate, boolean pat, boolean impossibleOfCheckMate){
+        return;
+    }
+
     private boolean remoteMove(int fromX, int fromY, int toX, int toY) {
-        return super.move(fromX, fromY, toX, toY);
+        boolean result = super.move(fromX, fromY, toX, toY);
+        if(isEndGame()){
+            new Thread(this::postGameActions).start();
+        }
+        return result;
     }
 }
