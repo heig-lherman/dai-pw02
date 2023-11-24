@@ -36,6 +36,7 @@ public class GameManager implements ChessController {
     protected final Board board = new Board();
     protected ChessView chessView;
     private int turn;
+    private boolean isEndGame;
 
     /**
      * Constructor for a new GameManager in the initial state of a chess game.
@@ -48,6 +49,7 @@ public class GameManager implements ChessController {
         board.reset();
         mandatoryAdversaryMoves.clear();
         turn = 0;
+        isEndGame = false;
 
         if (null != chessView) {
             insertPiecesInView();
@@ -136,11 +138,22 @@ public class GameManager implements ChessController {
         boolean stalemate = isStalemate();
         displayMessages(checkMate, check, stalemate, impossibleToCheckMate);
 
-        if (!checkMate && !impossibleToCheckMate && !stalemate) {
+        if (!isEndGame(checkMate, stalemate, impossibleToCheckMate)) {
             updatePlayerTurn();
         }
 
         postGameActions(checkMate, stalemate, impossibleToCheckMate);
+    }
+
+    protected boolean isEndGame(boolean checkMate, boolean stalemate, boolean impossibleToCheckMate) {
+        if (checkMate || stalemate || impossibleToCheckMate) {
+            isEndGame = true;
+        }
+        return isEndGame;
+    }
+
+    protected boolean isEndGame() {
+        return isEndGame;
     }
 
     /**
@@ -187,7 +200,7 @@ public class GameManager implements ChessController {
      * @param pat                   indicates if there is a pat
      * @param impossibleOfCheckMate indicates if there is an impossibility of checkmate
      */
-    private void postGameActions(boolean checkMate, boolean pat, boolean impossibleOfCheckMate) {
+    protected void postGameActions(boolean checkMate, boolean pat, boolean impossibleOfCheckMate) {
         if (!checkMate && !pat && !impossibleOfCheckMate) {
             return;
         }
@@ -195,6 +208,10 @@ public class GameManager implements ChessController {
         String header = checkMate
                 ? ChessString.playerWins(playerTurn())
                 : (pat ? ChessString.STALEMATE : ChessString.INSUFFICIENT_MATERIAL);
+        postGameActions();
+    }
+
+    protected void postGameActions(){
         String[] options = {ChessString.YES, ChessString.NO};
         UserChoice[] choices = new UserChoice[options.length];
 
@@ -203,12 +220,20 @@ public class GameManager implements ChessController {
             choices[finalI] = () -> options[finalI];
         }
 
-        UserChoice choice = chessView.askUser(header, ChessString.PLAY_AGAIN_QUESTION, choices);
+        UserChoice choice = askUserToPlayAgain("Header to replace", ChessString.PLAY_AGAIN_QUESTION, choices);
         if (null != choice && choice.equals(choices[0])) {
-            clearView();
-            newGame();
-            chessView.displayMessage(ChessString.NEW_GAME);
+            restartGame();
         }
+    }
+
+    protected void restartGame() {
+        clearView();
+        newGame();
+        chessView.displayMessage(ChessString.NEW_GAME);
+    }
+
+    protected UserChoice askUserToPlayAgain(String header, String question, UserChoice[] choices) {
+        return chessView.askUser(header, question, choices);
     }
 
     /**
@@ -504,19 +529,23 @@ public class GameManager implements ChessController {
      * Method used to promote a piece. The board and the chessView are updated.
      *
      * @param piece the piece to promote
+     * @return the choice of the user
      */
-    private void promote(ChessPiece piece) {
+    protected ChessPiece promote(ChessPiece piece) {
         int posX = piece.getX(), posY = piece.getY();
         PlayerColor color = piece.getPlayerColor();
         ChessPiece[] options = {
                 new Queen(color, posX, posY), new Rook(color, posX, posY),
                 new Bishop(color, posX, posY), new Knight(color, posX, posY)
         };
-        ChessPiece choice = chessView.askUser(
-                ChessString.PROMOTION, ChessString.CHOOSE_PROMOTION, options
-        );
+        ChessPiece choice = askUserForPromotion(ChessString.PROMOTION, ChessString.CHOOSE_PROMOTION, options);
         removePiece(piece);
         insertPiece(choice);
+        return choice;
+    }
+
+    protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
+        return chessView.askUser(header, question, options);
     }
 
     /**

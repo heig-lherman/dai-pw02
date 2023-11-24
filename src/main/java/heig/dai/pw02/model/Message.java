@@ -6,17 +6,14 @@ import java.util.List;
 
 public record Message(CCPMessage type, String arguments) {
 
+
     @Override
     public String toString() {
         return switch (type) {
-            case HELLO -> "HELLO";
             case COLOR -> "COLOR " + arguments;
-            case OK -> "OK";
             case MOVE -> "MOVE " + arguments;
-            case YOURTURN -> "YOURTURN";
-            case STALEMATE -> "STALEMATE";
-            case CHECKMATE -> "CHECKMATE";
-            case NOMATERIAL -> "NOMATERIAL";
+            case PROMOTION -> "PROMOTION " + arguments;
+            case REPLAY -> "REPLAY " + arguments;
             case ERROR -> "ERROR";
             default -> throw new RuntimeException("Unknown message type");
         };
@@ -27,5 +24,13 @@ public record Message(CCPMessage type, String arguments) {
         CCPMessage type = CCPMessage.valueOf(parts[0]);
         String arguments = socketMessage.substring(type.toString().length() + 1);
         return new Message(type, arguments);
+    }
+
+    public static Integer[] parseArgumentsToInt(Message message) {
+        return List.of(message.arguments().split(" ")).stream().map(Integer::parseInt).toArray(Integer[]::new);
+    }
+
+    public static String[] parseArgumentsToString(Message message) {
+        return message.arguments().split(" ");
     }
 }
