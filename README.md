@@ -6,7 +6,7 @@
 ### Server to client
 
 * ```COLOR <color>``` :  The server sends the color of the player to the client when there are two players connected.
-  * <color> : WHITE or BLACK
+  * ```<color>``` : WHITE or BLACK
 * ```MOVE <fromX> <fromY> <toX> <toY>``` : The server sends the move of the opponent to the client.
   * ```<fromX>``` : The X coordinate of the piece to move.
   * ```<fromY>``` : The Y coordinate of the piece to move.
