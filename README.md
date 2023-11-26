@@ -37,8 +37,8 @@ sequenceDiagram
     par
     White -->> Server: Establish connection
     Black -->> Server: Establish connection
-    Server -->> White: COLOR WHITE
-    Server -->> Black: COLOR BLACK
+    Server ->> White: COLOR WHITE
+    Server ->> Black: COLOR BLACK
     end
 
     loop eachTurn
