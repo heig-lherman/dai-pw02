@@ -5,6 +5,7 @@ import heig.dai.pw02.socket.SocketManager;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.Assertions;
 
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Stack;
 
@@ -14,6 +15,14 @@ public abstract class CCPHandler {
 
     public CCPHandler(Socket socketManager) {
         this.socketManager = new SocketManager(socketManager);
+    }
+
+    public void disconnect() {
+        try {
+            socketManager.closeSocket();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void sendStack() {

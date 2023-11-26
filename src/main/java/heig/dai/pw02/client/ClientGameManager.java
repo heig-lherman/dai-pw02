@@ -6,6 +6,7 @@ import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
+import heig.poo.chess.engine.util.ChessString;
 import heig.poo.chess.views.gui.GUIView;
 
 import java.util.Objects;
@@ -13,6 +14,7 @@ import java.util.Objects;
 public class ClientGameManager extends GameManager {
     private ServerHandler server;
     private PlayerColor myColor;
+    private boolean boardIsBlocked = false;
 
     public ClientGameManager(ServerHandler server) {
         super();
@@ -49,6 +51,9 @@ public class ClientGameManager extends GameManager {
      */
     @Override
     public boolean move(int fromX, int fromY, int toX, int toY) {
+        if (boardIsBlocked) {
+            return false;
+        }
         ChessPiece piece = super.board.getPiece(fromX, fromY);
         if (Objects.isNull(piece)) {
             return false;
@@ -119,6 +124,16 @@ public class ClientGameManager extends GameManager {
         ChessView.UserChoice choice = super.askUserToPlayAgain(header, question, choices);
         server.addReplayToStack(choice.textValue());
         server.sendStack();
+        if (choice.textValue().equals("No")) {
+            super.chessView.displayMessage("Exiting the game");
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            server.disconnect();
+            System.exit(0);
+        }
         return choice;
     }
 
@@ -135,6 +150,7 @@ public class ClientGameManager extends GameManager {
 
     protected void postGameActions(){
         super.postGameActions();
+        boardIsBlocked = true;
         super.chessView.displayMessage("Waiting for the other player to choose");
         Message otherPlayerReplay = server.receiveReplay();
         String replay = otherPlayerReplay.arguments();
@@ -147,17 +163,13 @@ public class ClientGameManager extends GameManager {
             }
             System.exit(0);
         }
-    }
-
-    /**
-     * Function used to restart the game. In the case of a remote game, we listen to the server to make the move.
-     */
-    protected void restartGame(){
-        super.restartGame();
+        boardIsBlocked = false;
+        super.chessView.displayMessage(ChessString.playerToMove(playerTurn()));
         if (myColor == PlayerColor.BLACK) {
             listenMove();
         }
     }
+
 
     /**
      * Private function used primarily to make the move sent by the server. Used in the move() function to avoid

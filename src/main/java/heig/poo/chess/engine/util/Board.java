@@ -190,19 +190,26 @@ public class Board {
      * Method used to fill the board with the initial pieces.
      */
     private void fillBoard() {
-        Pawn p1 = new Pawn(PlayerColor.WHITE, 0, BOARD_SIZE - 2);
-        Pawn p2 = new Pawn(PlayerColor.BLACK, 0, 1);
-        addPiece(p1);
-        addPiece(p2);
-        promotablePieces.add(p1);
-        promotablePieces.add(p2);
         for (PlayerColor color : PlayerColor.values()) {
             int line = PlayerColor.WHITE == color ? 0 : BOARD_SIZE - 1;
             int pawnLine = PlayerColor.WHITE == color ? line + 1 : line - 1;
             Rook r1 = new Rook(color, 0, line);
             Rook r2 = new Rook(color, 7, line);
             King k = new King(color, 4, line, r1, r2);
+            addPiece(r1);
+            addPiece(r2);
             addPiece(k);
+            addPiece(new Knight(color, 1, line));
+            addPiece(new Bishop(color, 2, line));
+            addPiece(new Queen(color, 3, line));
+            addPiece(new Bishop(color, 5, line));
+            addPiece(new Knight(color, 6, line));
+
+            for (int j = 0; j < Board.BOARD_SIZE; j++) {
+                Pawn p = new Pawn(color, j, pawnLine);
+                addPiece(p);
+                promotablePieces.add(p);
+            }
 
             kings[color.ordinal()] = k;
         }
