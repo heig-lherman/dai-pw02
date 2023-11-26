@@ -3,6 +3,7 @@ package heig.dai.pw02.ccp;
 import heig.dai.pw02.model.Message;
 import heig.dai.pw02.socket.SocketManager;
 import heig.poo.chess.engine.piece.ChessPiece;
+import heig.poo.chess.engine.util.Assertions;
 
 import java.net.Socket;
 import java.util.Stack;
@@ -38,6 +39,16 @@ public abstract class CCPHandler {
     public Message receivePromotion() {
         Message message = receiveMessage();
         return message.type().equals(CCPMessage.PROMOTION) ? message : null;
+    }
+
+    public Message receiveReplay() {
+        Message message = receiveMessage();
+        return message.type().equals(CCPMessage.REPLAY) ? message : null;
+    }
+
+    public void addReplayToStack(String replay) {
+        Assertions.assertTrue(replay.equals("Yes") || replay.equals("No"), "Replay must be Yes or No");
+        addToStack(new Message(CCPMessage.REPLAY, replay));
     }
 
     protected void addToStack(Message message) {

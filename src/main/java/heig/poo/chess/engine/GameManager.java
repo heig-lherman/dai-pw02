@@ -204,10 +204,6 @@ public class GameManager implements ChessController {
         if (!checkMate && !pat && !impossibleOfCheckMate) {
             return;
         }
-
-        String header = checkMate
-                ? ChessString.playerWins(playerTurn())
-                : (pat ? ChessString.STALEMATE : ChessString.INSUFFICIENT_MATERIAL);
         postGameActions();
     }
 
@@ -219,8 +215,13 @@ public class GameManager implements ChessController {
             int finalI = i;
             choices[finalI] = () -> options[finalI];
         }
-
-        UserChoice choice =  askUserToPlayAgain("Header to replace", ChessString.PLAY_AGAIN_QUESTION, choices);
+        boolean checkMate = !mandatoryAdversaryMoves.isEmpty()
+                && mandatoryAdversaryMoves.values().stream().allMatch(List::isEmpty);
+        boolean stalemate = isStalemate();
+        String header = checkMate
+                ? ChessString.playerWins(playerTurn())
+                : (stalemate ? ChessString.STALEMATE : ChessString.INSUFFICIENT_MATERIAL);
+        UserChoice choice =  askUserToPlayAgain(header, ChessString.PLAY_AGAIN_QUESTION, choices);
         if (null != choice && choice.equals(choices[0])) {
             restartGame();
         }

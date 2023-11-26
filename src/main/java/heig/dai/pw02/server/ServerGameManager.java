@@ -102,11 +102,22 @@ public final class ServerGameManager extends GameManager {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
+        String goodResponse = "Yes";
+        String badResponse = "No";
         String whiteResponse = Message.parseArgumentsToString(whiteMessage.get())[0];
         String blackResponse = Message.parseArgumentsToString(blackMessage.get())[0];
-        if (whiteResponse.equals("Yes") && blackResponse.equals("Yes")) {
+        if (whiteResponse.equals(goodResponse) && blackResponse.equals(goodResponse)) {
+            players.get(PlayerColor.WHITE).addReplayToStack(goodResponse);
+            players.get(PlayerColor.BLACK).addReplayToStack(goodResponse);
             restartGame();
+        }else{
+            players.get(PlayerColor.WHITE).addReplayToStack(badResponse);
+            players.get(PlayerColor.BLACK).addReplayToStack(badResponse);
+            players.get(PlayerColor.WHITE).sendStack();
+            players.get(PlayerColor.BLACK).sendStack();
+            System.exit(0);
         }
+        players.get(PlayerColor.WHITE).sendStack();
+        players.get(PlayerColor.BLACK).sendStack();
     }
 }

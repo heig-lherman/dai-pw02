@@ -43,10 +43,9 @@ public class ClientCommand implements Callable<Integer> {
             socket = new Socket(ipAddress, port);
         } catch (Exception e){
             System.out.println("Error while connecting to the server");
+            System.exit(0);
         }
-        ServerHandler server = new ServerHandler(socket);
-        ClientGameManager controller = new ClientGameManager(server);
-        controller.start();
+        new ClientGameManager(new ServerHandler(socket)).start();
         return 0;
     }
 }

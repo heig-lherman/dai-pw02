@@ -1,7 +1,5 @@
 package heig.dai.pw02.server;
 
-import heig.poo.chess.ChessView;
-import heig.poo.chess.views.gui.GUIView;
 import java.net.Socket;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
