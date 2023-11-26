@@ -16,12 +16,6 @@ public class PlayerHandler extends CCPHandler implements Runnable {
         sendMessage(new Message(CCPMessage.COLOR, color.toString()));
     }
 
-
-    public Message receiveReplay() {
-        Message message = receiveMessage();
-        return message.type().equals(CCPMessage.REPLAY) ? message : null;
-    }
-
     @Override
     public void run() {
 

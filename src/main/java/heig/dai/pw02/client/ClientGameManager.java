@@ -6,7 +6,7 @@ import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
-import heig.poo.chess.engine.util.Assertions;
+import heig.poo.chess.views.gui.GUIView;
 
 import java.util.Objects;
 
@@ -14,16 +14,17 @@ public class ClientGameManager extends GameManager {
     private ServerHandler server;
     private PlayerColor myColor;
 
-    /**
-     * Function used to start the game. In the case of a remote game, we receive the color from the server.
-     * @param view the view
-     * @param server the server
-     */
-    public void start(ChessView view, ServerHandler server) {
-        Assertions.assertNotNull(server, "Player cannot be null");
+    public ClientGameManager(ServerHandler server) {
+        super();
         this.server = server;
         this.myColor = server.receiveColor();
-        super.start(view);
+    }
+
+    /**
+     * Function used to start the game. In the case of a remote game, we start the GUIView and listen to the server.
+     */
+    public void start() {
+        super.start(new GUIView(this, "Client - " + myColor.toString()));
         if (myColor == PlayerColor.BLACK) {
             listenMove();
         }
@@ -57,8 +58,10 @@ public class ClientGameManager extends GameManager {
             return false;
         }
         if (remoteMove(fromX, fromY, toX, toY)) {
+            if(!isEndGame()){
+                new Thread(this::listenMove).start();
+            }
             server.addMoveToStack(fromX, fromY, toX, toY);
-            new Thread(this::listenMove).start();
             server.sendStack();
             return true;
         }else {
@@ -128,6 +131,22 @@ public class ClientGameManager extends GameManager {
      */
     protected void postGameActions(boolean checkMate, boolean pat, boolean impossibleOfCheckMate){
         return;
+    }
+
+    protected void postGameActions(){
+        super.postGameActions();
+        super.chessView.displayMessage("Waiting for the other player to choose");
+        Message otherPlayerReplay = server.receiveReplay();
+        String replay = otherPlayerReplay.arguments();
+        if (replay.equals("No")) {
+            super.chessView.displayMessage("Players are not in agreement. Exiting the game");
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.exit(0);
+        }
     }
 
     /**

@@ -17,8 +17,4 @@ public class ServerHandler extends CCPHandler {
         return message.type().equals(CCPMessage.COLOR) ? PlayerColor.valueOf(message.arguments()) : null;
     }
 
-    public void addReplayToStack(String replay) {
-        super.addToStack(new Message(CCPMessage.REPLAY, replay));
-    }
-
 }
