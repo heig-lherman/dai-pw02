@@ -18,6 +18,7 @@ public class SocketManager {
             this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             this.output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
         } catch (IOException e) {
+            System.out.println("Error while creating socket manager");
             throw new RuntimeException(e);
         }
     }
