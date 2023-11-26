@@ -74,6 +74,7 @@ public class ClientGameManager extends GameManager {
      * @param options the options
      * @return a piece of the type chosen by the user
      */
+
     @Override
     protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
         ChessPiece movingPiece = super.board.getPiece(options[0].getX(), options[0].getY());
