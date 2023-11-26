@@ -1,7 +1,5 @@
 package heig.dai.pw02.server;
 
-import heig.dai.pw02.ccp.CCPMessage;
-import heig.dai.pw02.model.Message;
 import heig.poo.chess.PlayerColor;
 
 public record PlayerPair(

@@ -1,12 +1,7 @@
 package heig.dai.pw02.server;
 
 import heig.poo.chess.ChessView;
-import heig.poo.chess.PlayerColor;
-import heig.poo.chess.views.console.ConsoleView;
 import heig.poo.chess.views.gui.GUIView;
-
-import java.io.InputStream;
-import java.io.SequenceInputStream;
 import java.net.Socket;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
@@ -42,8 +37,7 @@ public final class ServerGamePool {
                     playerQueue.poll()
             );
             ServerGameManager gameManager = new ServerGameManager(pair);
-            ChessView view = new GUIView(gameManager, "Server");
-            gameManager.start(view);
+            gameManager.start();
         }
 
         return CompletableFuture.runAsync(playerHandler, threadPool);

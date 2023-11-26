@@ -220,7 +220,7 @@ public class GameManager implements ChessController {
             choices[finalI] = () -> options[finalI];
         }
 
-        UserChoice choice = askUserToPlayAgain("Header to replace", ChessString.PLAY_AGAIN_QUESTION, choices);
+        UserChoice choice =  askUserToPlayAgain("Header to replace", ChessString.PLAY_AGAIN_QUESTION, choices);
         if (null != choice && choice.equals(choices[0])) {
             restartGame();
         }

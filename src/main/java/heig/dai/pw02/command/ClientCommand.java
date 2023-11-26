@@ -5,9 +5,6 @@ import java.util.concurrent.Callable;
 
 import heig.dai.pw02.client.ClientGameManager;
 import heig.dai.pw02.client.ServerHandler;
-import heig.poo.chess.ChessView;
-import heig.poo.chess.views.console.ConsoleView;
-import heig.poo.chess.views.gui.GUIView;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -39,12 +36,6 @@ public class ClientCommand implements Callable<Integer> {
     )
     private int port;
 
-    @Option(
-            names = {"-g", "--gui"},
-            description = "enable the use of a GUI to play the game"
-    )
-    private boolean useGui;
-
     @Override
     public Integer call() {
         Socket socket = null;
@@ -53,10 +44,9 @@ public class ClientCommand implements Callable<Integer> {
         } catch (Exception e){
             System.out.println("Error while connecting to the server");
         }
-        ServerHandler player = new ServerHandler(socket);
-        ClientGameManager controller = new ClientGameManager();
-        ChessView view = useGui ? new GUIView(controller, "Client") : new ConsoleView(controller);
-        controller.start(view, player);
+        ServerHandler server = new ServerHandler(socket);
+        ClientGameManager controller = new ClientGameManager(server);
+        controller.start();
         return 0;
     }
 }

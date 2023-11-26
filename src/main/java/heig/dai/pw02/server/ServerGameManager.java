@@ -6,6 +6,7 @@ import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
+import heig.poo.chess.views.gui.GUIView;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,13 +15,13 @@ public final class ServerGameManager extends GameManager {
     private final PlayerPair players;
 
     public ServerGameManager(PlayerPair players) {
+        super();
         this.players = players;
         this.players.sendColors();
     }
 
-    @Override
-    public void start(ChessView view) {
-        super.start(view);
+    public void start() {
+        super.start(new GUIView(this, "Server"));
         listenToPlayer();
     }
 
@@ -74,6 +75,11 @@ public final class ServerGameManager extends GameManager {
         return null;
     }
 
+    /**
+     * In order to avoid the blocking of the server, we don't ask the user to play again. We send the move to the
+     * client and then ask the clients if they want to play again with askUsersToPlayAgain().
+     * @return null
+     */
     @Override
     protected ChessView.UserChoice askUserToPlayAgain(String header, String question, ChessView.UserChoice[] options) {
         return null;
