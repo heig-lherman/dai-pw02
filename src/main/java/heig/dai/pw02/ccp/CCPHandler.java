@@ -25,10 +25,6 @@ public abstract class CCPHandler {
         }
     }
 
-    public void sendMove(int fromX, int fromY, int toX, int toY) {
-        sendMessage(new Message(CCPMessage.MOVE, fromX + " " + fromY + " " + toX + " " + toY));
-    }
-
     public Message receiveMove() {
         Message message = receiveMessage();
         return message.type().equals(CCPMessage.MOVE) ? message : null;
