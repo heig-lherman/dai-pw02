@@ -35,8 +35,8 @@ sequenceDiagram
     actor Black as Black
 
     par
-    White ->> Server: HELO
-    Black ->> Server: HELO
+    White -->> Server: Establish connection
+    Black -->> Server: Establish connection
     Server -->> White: COLOR WHITE
     Server -->> Black: COLOR BLACK
     end
