@@ -4,14 +4,13 @@ import heig.dai.pw02.model.Message;
 import heig.dai.pw02.socket.SocketManager;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.Assertions;
-
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Stack;
 
 public abstract class CCPHandler {
     private final SocketManager socketManager;
-    private final Stack<Message> messageStack = new Stack<>();
+    private final Stack<Message<String>> messageStack = new Stack<>();
 
     public CCPHandler(Socket socketManager) {
         this.socketManager = new SocketManager(socketManager);
@@ -31,45 +30,52 @@ public abstract class CCPHandler {
         }
     }
 
-    public Message receiveMove() {
-        Message message = receiveMessage();
-        return message.type().equals(CCPMessage.MOVE) ? message : null;
+    public Message<String> receiveMove() {
+        return receiveMessage(CCPMessage.MOVE);
+    }
+
+    public Message<String> receivePromotion() {
+        return receiveMessage(CCPMessage.PROMOTION);
+    }
+
+    public Message<String> receiveReplay() {
+        return receiveMessage(CCPMessage.REPLAY);
     }
 
     public void addMoveToStack(int fromX, int fromY, int toX, int toY) {
-        messageStack.add(new Message(CCPMessage.MOVE, fromX + " " + fromY + " " + toX + " " + toY));
+        addToStack(Message.withParsedArgsFromIntToString(new Message<>(CCPMessage.MOVE, fromX, fromY, toX, toY)));
     }
 
     public void addPromotionToStack(ChessPiece piece) {
-        addToStack(new Message(CCPMessage.PROMOTION,
-                piece.getPieceType().toString() + " " + piece.getX() + " " + piece.getY()));
-    }
-
-    public Message receivePromotion() {
-        Message message = receiveMessage();
-        return message.type().equals(CCPMessage.PROMOTION) ? message : null;
-    }
-
-    public Message receiveReplay() {
-        Message message = receiveMessage();
-        return message.type().equals(CCPMessage.REPLAY) ? message : null;
+        addToStack(Message.withParsedArgsFromIntToString(
+                new Message<>(CCPMessage.PROMOTION, piece.getPieceType().ordinal(), piece.getX(), piece.getY())));
     }
 
     public void addReplayToStack(String replay) {
         Assertions.assertTrue(replay.equals("Yes") || replay.equals("No"), "Replay must be Yes or No");
-        addToStack(new Message(CCPMessage.REPLAY, replay));
+        addToStack(new Message<>(CCPMessage.REPLAY, replay));
     }
 
-    protected void addToStack(Message message) {
+    protected void addToStack(Message<String> message) {
         messageStack.add(message);
     }
 
-    protected void sendMessage(Message message) {
+    protected void sendMessage(Message<String> message) {
         socketManager.send(message);
     }
 
-    protected Message receiveMessage() {
+    protected Message<String> receiveMessage() {
         return socketManager.read();
+    }
+
+    protected Message<String> receiveMessage(CCPMessage type) {
+        Message<String> message = socketManager.read();
+        if(message.getType().equals(type)) {
+            return message;
+        }else{
+            // Send error message, type is not the expected one
+            return null;
+        }
     }
 
 }
