@@ -64,7 +64,7 @@ public final class ServerGameManager extends GameManager {
         Message<Integer> message = Message.withParsedArgsFromStringToInt(players.get(playerTurn()).receivePromotion());
         Integer[] parsedArgs = message.getArguments();
         for (ChessPiece piece : options) {
-            if (piece.getPieceType() == PieceType.valueOf(parsedArgs[0])
+            if (piece.getPieceType() == PieceType.values()[parsedArgs[0]]
                     && piece.getX() == parsedArgs[1]
                     && piece.getY() == parsedArgs[2]) {
                 players.get(playerTurn().opposite()).addPromotionToStack(piece);
