@@ -98,7 +98,7 @@ public class ClientGameManager extends GameManager {
         System.out.println(question);
         Message<Integer> message = Message.withParsedArgsFromStringToInt(server.receivePromotion());
         Integer[] parsedArgs = message.getArguments();
-        PieceType pieceType = PieceType.valueOf(parsedArgs[0]);
+        PieceType pieceType = PieceType.values()[parsedArgs[0]];
         for (ChessPiece piece : options) {
             if (piece.getPieceType() == pieceType && piece.getX() == parsedArgs[1] && piece.getY() == parsedArgs[2]) {
                 return piece;
