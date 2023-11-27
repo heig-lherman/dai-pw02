@@ -13,7 +13,7 @@ public class PlayerHandler extends CCPHandler implements Runnable {
     }
 
     public void sendColor(PlayerColor color) {
-        sendMessage(new Message(CCPMessage.COLOR, color.toString()));
+        sendMessage(new Message<>(CCPMessage.COLOR, color.toString()));
     }
 
     @Override

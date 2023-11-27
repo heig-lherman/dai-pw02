@@ -40,8 +40,8 @@ public final class ServerGameManager extends GameManager {
         while (true) {
             PlayerColor currentTurn = playerTurn();
             PlayerHandler player = players.get(currentTurn);
-            Message message = player.receiveMove();
-            Integer[] parsedArgs = Message.parseArgumentsToInt(message);
+            Message<Integer> message = Message.withParsedArgsFromStringToInt(player.receiveMove());
+            Integer[] parsedArgs = message.getArguments();
             remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
             PlayerHandler otherPlayer = players.get(currentTurn.opposite());
             otherPlayer.addMoveToStack(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
@@ -61,13 +61,12 @@ public final class ServerGameManager extends GameManager {
     protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
         System.out.println(header);
         System.out.println(question);
-        Message message = players.get(playerTurn()).receivePromotion();
-        String[] parsedArgs = message.arguments().split(" ");
-        PieceType pieceType = PieceType.valueOf(parsedArgs[0]);
-        int x = Integer.parseInt(parsedArgs[1]);
-        int y = Integer.parseInt(parsedArgs[2]);
+        Message<Integer> message = Message.withParsedArgsFromStringToInt(players.get(playerTurn()).receivePromotion());
+        Integer[] parsedArgs = message.getArguments();
         for (ChessPiece piece : options) {
-            if (piece.getPieceType() == pieceType && piece.getX() == x && piece.getY() == y) {
+            if (piece.getPieceType() == PieceType.values()[parsedArgs[0]]
+                    && piece.getX() == parsedArgs[1]
+                    && piece.getY() == parsedArgs[2]) {
                 players.get(playerTurn().opposite()).addPromotionToStack(piece);
                 return piece;
             }
@@ -86,12 +85,12 @@ public final class ServerGameManager extends GameManager {
     }
 
     private void askUsersToPlayAgain() {
-        AtomicReference<Message> whiteMessage = new AtomicReference<>();
+        AtomicReference<Message<String>> whiteMessage = new AtomicReference<>();
         Thread whiteThread = new Thread(() -> {
             whiteMessage.set(players.get(PlayerColor.WHITE).receiveReplay());
         });
         whiteThread.start();
-        AtomicReference<Message> blackMessage = new AtomicReference<>();
+        AtomicReference<Message<String>> blackMessage = new AtomicReference<>();
         Thread blackThread = new Thread(() -> {
             blackMessage.set(players.get(PlayerColor.BLACK).receiveReplay());
         });
@@ -104,8 +103,8 @@ public final class ServerGameManager extends GameManager {
         }
         String goodResponse = "Yes";
         String badResponse = "No";
-        String whiteResponse = Message.parseArgumentsToString(whiteMessage.get())[0];
-        String blackResponse = Message.parseArgumentsToString(blackMessage.get())[0];
+        String whiteResponse = whiteMessage.get().getArguments()[0];
+        String blackResponse = blackMessage.get().getArguments()[0];
         if (whiteResponse.equals(goodResponse) && blackResponse.equals(goodResponse)) {
             players.get(PlayerColor.WHITE).addReplayToStack(goodResponse);
             players.get(PlayerColor.BLACK).addReplayToStack(goodResponse);

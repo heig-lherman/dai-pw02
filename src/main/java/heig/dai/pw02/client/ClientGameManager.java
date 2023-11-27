@@ -12,8 +12,8 @@ import heig.poo.chess.views.gui.GUIView;
 import java.util.Objects;
 
 public class ClientGameManager extends GameManager {
-    private ServerHandler server;
-    private PlayerColor myColor;
+    private final ServerHandler server;
+    private final PlayerColor myColor;
     private boolean boardIsBlocked = false;
 
     public ClientGameManager(ServerHandler server) {
@@ -36,8 +36,8 @@ public class ClientGameManager extends GameManager {
      * Function used to listen to the server and make the move sent by the server.
      */
     private void listenMove() {
-        Message message = server.receiveMove();
-        Integer[] parsedArgs = Message.parseArgumentsToInt(message);
+        Message<Integer> message = Message.withParsedArgsFromStringToInt(server.receiveMove());
+        Integer[] parsedArgs = message.getArguments();
         remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
     }
 
@@ -96,13 +96,11 @@ public class ClientGameManager extends GameManager {
         }
         System.out.println(header);
         System.out.println(question);
-        Message message = server.receivePromotion();
-        String[] parsedArgs = message.arguments().split(" ");
-        PieceType pieceType = PieceType.valueOf(parsedArgs[0]);
-        int x = Integer.parseInt(parsedArgs[1]);
-        int y = Integer.parseInt(parsedArgs[2]);
+        Message<Integer> message = Message.withParsedArgsFromStringToInt(server.receivePromotion());
+        Integer[] parsedArgs = message.getArguments();
+        PieceType pieceType = PieceType.values()[parsedArgs[0]];
         for (ChessPiece piece : options) {
-            if (piece.getPieceType() == pieceType && piece.getX() == x && piece.getY() == y) {
+            if (piece.getPieceType() == pieceType && piece.getX() == parsedArgs[1] && piece.getY() == parsedArgs[2]) {
                 return piece;
             }
         }
@@ -152,8 +150,8 @@ public class ClientGameManager extends GameManager {
         super.postGameActions();
         boardIsBlocked = true;
         super.chessView.displayMessage("Waiting for the other player to choose");
-        Message otherPlayerReplay = server.receiveReplay();
-        String replay = otherPlayerReplay.arguments();
+        Message<String> otherPlayerReplay = server.receiveReplay();
+        String replay = otherPlayerReplay.getArguments()[0];
         if (replay.equals("No")) {
             super.chessView.displayMessage("Players are not in agreement. Exiting the game");
             try {
