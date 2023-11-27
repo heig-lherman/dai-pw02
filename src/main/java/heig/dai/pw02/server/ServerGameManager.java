@@ -61,13 +61,12 @@ public final class ServerGameManager extends GameManager {
     protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
         System.out.println(header);
         System.out.println(question);
-        Message<String> message = players.get(playerTurn()).receivePromotion();
-        String[] parsedArgs = message.getArguments();
-        PieceType pieceType = PieceType.valueOf(parsedArgs[0]);
-        int x = Integer.parseInt(parsedArgs[1]);
-        int y = Integer.parseInt(parsedArgs[2]);
+        Message<Integer> message = Message.withParsedArgsFromStringToInt(players.get(playerTurn()).receivePromotion());
+        Integer[] parsedArgs = message.getArguments();
         for (ChessPiece piece : options) {
-            if (piece.getPieceType() == pieceType && piece.getX() == x && piece.getY() == y) {
+            if (piece.getPieceType() == PieceType.valueOf(parsedArgs[0])
+                    && piece.getX() == parsedArgs[1]
+                    && piece.getY() == parsedArgs[2]) {
                 players.get(playerTurn().opposite()).addPromotionToStack(piece);
                 return piece;
             }
