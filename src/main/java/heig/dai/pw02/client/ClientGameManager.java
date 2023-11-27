@@ -2,6 +2,7 @@ package heig.dai.pw02.client;
 
 import heig.dai.pw02.model.Message;
 import heig.poo.chess.ChessView;
+import heig.poo.chess.ChessView.UserChoice;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
@@ -10,8 +11,11 @@ import heig.poo.chess.engine.util.ChessString;
 import heig.poo.chess.views.gui.GUIView;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ClientGameManager extends GameManager {
+
     private final ServerHandler server;
     private final PlayerColor myColor;
     private boolean boardIsBlocked = false;
@@ -36,17 +40,18 @@ public class ClientGameManager extends GameManager {
      * Function used to listen to the server and make the move sent by the server.
      */
     private void listenMove() {
-        Message<Integer> message = Message.withParsedArgsFromStringToInt(server.receiveMove());
-        Integer[] parsedArgs = message.getArguments();
+        Message message = server.receiveMove();
+        int[] parsedArgs = message.getNumericArguments();
         remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
     }
 
     /**
      * Function used to make a move. In the case of a remote game, we send the move to the server.
+     *
      * @param fromX the x coordinate of the piece to move
      * @param fromY the y coordinate of the piece to move
-     * @param toX the x coordinate of the destination
-     * @param toY the y coordinate of the destination
+     * @param toX   the x coordinate of the destination
+     * @param toY   the y coordinate of the destination
      * @return true if the move is valid, false otherwise
      */
     @Override
@@ -54,32 +59,36 @@ public class ClientGameManager extends GameManager {
         if (boardIsBlocked) {
             return false;
         }
-        ChessPiece piece = super.board.getPiece(fromX, fromY);
+
+        ChessPiece piece = board.getPiece(fromX, fromY);
         if (Objects.isNull(piece)) {
             return false;
         }
-        PlayerColor colorMoving = super.board.getPiece(fromX, fromY).getPlayerColor();
+
+        PlayerColor colorMoving = board.getPiece(fromX, fromY).getPlayerColor();
         if (colorMoving != myColor || playerTurn() != colorMoving) {
             return false;
         }
+
         if (remoteMove(fromX, fromY, toX, toY)) {
-            if(!isEndGame()){
+            if (!isEndGame()) {
                 new Thread(this::listenMove).start();
             }
             server.addMoveToStack(fromX, fromY, toX, toY);
             server.sendStack();
             return true;
-        }else {
-            System.out.println("Invalid move");
-            return false;
         }
+
+        log.error("Invalid move");
+        return false;
     }
 
     /**
      * Ask the user for a promotion. In the case of a remote game, we send the choice to the server.
-     * @param header  the header of the question
+     *
+     * @param header   the header of the question
      * @param question the question
-     * @param options the options
+     * @param options  the options
      * @return a piece of the type chosen by the user
      */
 
@@ -96,8 +105,8 @@ public class ClientGameManager extends GameManager {
         }
         System.out.println(header);
         System.out.println(question);
-        Message<Integer> message = Message.withParsedArgsFromStringToInt(server.receivePromotion());
-        Integer[] parsedArgs = message.getArguments();
+        Message message = server.receivePromotion();
+        int[] parsedArgs = message.getNumericArguments();
         PieceType pieceType = PieceType.values()[parsedArgs[0]];
         for (ChessPiece piece : options) {
             if (piece.getPieceType() == pieceType && piece.getX() == parsedArgs[1] && piece.getY() == parsedArgs[2]) {
@@ -110,16 +119,17 @@ public class ClientGameManager extends GameManager {
     /**
      * Ask the user to play again. In the case of a remote game, we send the choice to the server. If the user wants
      * to play again, we restart the game with restartGame().
+     *
      * @param header   the header of the question
      * @param question the question
      * @param choices  the choices
      * @return the choice of the user
      */
     @Override
-    protected ChessView.UserChoice askUserToPlayAgain(String header, String question, ChessView.UserChoice[] choices) {
+    protected UserChoice askUserToPlayAgain(String header, String question, UserChoice[] choices) {
         System.out.println(header);
         System.out.println(question);
-        ChessView.UserChoice choice = super.askUserToPlayAgain(header, question, choices);
+        UserChoice choice = super.askUserToPlayAgain(header, question, choices);
         server.addReplayToStack(choice.textValue());
         server.sendStack();
         if (choice.textValue().equals("No")) {
@@ -135,22 +145,16 @@ public class ClientGameManager extends GameManager {
         return choice;
     }
 
-    /**
-     * In order to make postGameActions() after sending the replay choice, we empty the function and call a new one
-     * later in a new thread.
-     * @param checkMate             indicates if the adversary king is in checkmate
-     * @param pat                   indicates if there is a pat
-     * @param impossibleOfCheckMate indicates if there is an impossibility of checkmate
-     */
-    protected void postGameActions(boolean checkMate, boolean pat, boolean impossibleOfCheckMate){
-        return;
+    @Override
+    protected void postGameActions(boolean checkMate, boolean pat, boolean impossibleOfCheckMate) {
+        // NOTE: Handled asynchronously when receiving the request from the server
     }
 
-    protected void postGameActions(){
+    protected void postGameActions() {
         super.postGameActions();
         boardIsBlocked = true;
         super.chessView.displayMessage("Waiting for the other player to choose");
-        Message<String> otherPlayerReplay = server.receiveReplay();
+        Message otherPlayerReplay = server.receiveReplay();
         String replay = otherPlayerReplay.getArguments()[0];
         if (replay.equals("No")) {
             super.chessView.displayMessage("Players are not in agreement. Exiting the game");
@@ -172,15 +176,16 @@ public class ClientGameManager extends GameManager {
     /**
      * Private function used primarily to make the move sent by the server. Used in the move() function to avoid
      * duplicate code.
+     *
      * @param fromX the x coordinate of the piece to move
      * @param fromY the y coordinate of the piece to move
-     * @param toX  the x coordinate of the destination
-     * @param toY the y coordinate of the destination
+     * @param toX   the x coordinate of the destination
+     * @param toY   the y coordinate of the destination
      * @return true if the move is valid, false otherwise
      */
     private boolean remoteMove(int fromX, int fromY, int toX, int toY) {
         boolean result = super.move(fromX, fromY, toX, toY);
-        if(isEndGame()){
+        if (isEndGame()) {
             new Thread(this::postGameActions).start();
         }
         return result;

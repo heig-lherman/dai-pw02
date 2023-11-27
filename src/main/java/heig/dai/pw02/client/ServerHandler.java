@@ -8,6 +8,7 @@ import heig.poo.chess.PlayerColor;
 import java.net.Socket;
 
 public class ServerHandler extends CCPHandler {
+
     public ServerHandler(Socket playerConnection) {
         super(playerConnection);
     }
@@ -15,5 +16,4 @@ public class ServerHandler extends CCPHandler {
     public PlayerColor receiveColor() {
         return PlayerColor.valueOf(receiveMessage(CCPMessage.COLOR).getArguments()[0]);
     }
-
 }

@@ -4,15 +4,12 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import heig.dai.pw02.command.ClientCommand;
 import heig.dai.pw02.command.ServerCommand;
-import heig.poo.chess.ChessController;
-import heig.poo.chess.ChessView;
-import heig.poo.chess.views.console.ConsoleView;
-import heig.poo.chess.views.gui.GUIView;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParseResult;
 import picocli.CommandLine.ScopeType;
 
 /**
@@ -34,19 +31,15 @@ import picocli.CommandLine.ScopeType;
 )
 public class ChessCli implements Runnable {
 
+    boolean[] verbosity = new boolean[0];
+
     @Option(
             names = "-v",
             description = "Change log verbosity. Use -vvv for maximum verbosity.",
             scope = ScopeType.INHERIT
     )
-    public void setVerbosity(boolean[] verbose) {
-        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        root.setLevel(
-                verbose.length > 2 ? Level.ALL
-                        : verbose.length > 1 ? Level.DEBUG
-                        : verbose.length > 0 ? Level.INFO
-                        : Level.WARN
-        );
+    public void setVerbosity(boolean[] verbosity) {
+        this.verbosity = verbosity;
     }
 
     /**
@@ -59,11 +52,30 @@ public class ChessCli implements Runnable {
     }
 
     /**
+     * Proxy the default execution strategy, after setting the logger level correctly.
+     */
+    private int executionStrategy(ParseResult parseResult) {
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(
+                switch (verbosity.length) {
+                    case 0 -> Level.WARN;
+                    case 1 -> Level.INFO;
+                    case 2 -> Level.DEBUG;
+                    default -> Level.TRACE;
+                }
+        );
+        return new CommandLine.RunLast().execute(parseResult); // default execution strategy
+    }
+
+    /**
      * Main entry point for the CLI.
      *
      * @param args arguments that will be parsed by picocli
      */
     public static void main(String[] args) {
-        new CommandLine(new ChessCli()).execute(args);
+        ChessCli cli = new ChessCli();
+        new CommandLine(cli)
+                .setExecutionStrategy(cli::executionStrategy)
+                .execute(args);
     }
 }

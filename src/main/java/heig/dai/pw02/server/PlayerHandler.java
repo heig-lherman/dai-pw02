@@ -7,17 +7,13 @@ import heig.poo.chess.PlayerColor;
 
 import java.net.Socket;
 
-public class PlayerHandler extends CCPHandler implements Runnable {
+public class PlayerHandler extends CCPHandler {
+
     public PlayerHandler(Socket playerConnection) {
         super(playerConnection);
     }
 
     public void sendColor(PlayerColor color) {
-        sendMessage(new Message<>(CCPMessage.COLOR, color.toString()));
-    }
-
-    @Override
-    public void run() {
-
+        sendMessage(Message.of(CCPMessage.COLOR, color.name()));
     }
 }
