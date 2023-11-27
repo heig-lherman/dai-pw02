@@ -13,8 +13,7 @@ public class ServerHandler extends CCPHandler {
     }
 
     public PlayerColor receiveColor() {
-        Message message = receiveMessage();
-        return message.type().equals(CCPMessage.COLOR) ? PlayerColor.valueOf(message.arguments()) : null;
+        return PlayerColor.valueOf(receiveMessage(CCPMessage.COLOR).getArguments()[0]);
     }
 
 }
