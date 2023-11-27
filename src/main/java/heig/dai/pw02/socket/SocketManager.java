@@ -34,7 +34,7 @@ public class SocketManager {
         this.output.close();
     }
 
-    public void send(Message message) {
+    public void send(Message<String> message) {
         try{
             this.output.write(message.toString() + BREAK);
             this.output.flush();
@@ -44,7 +44,7 @@ public class SocketManager {
         }
     }
 
-    public Message read(){
+    public Message<String> read(){
         try{
             String line = input.readLine();
             System.out.println("Received: " + line);
