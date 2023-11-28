@@ -6,16 +6,14 @@ import heig.poo.chess.PlayerColor;
 import heig.poo.chess.assets.GuiAssets;
 import heig.poo.chess.views.BaseView;
 import heig.poo.chess.views.DrawableResource;
-
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Arrays;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Arrays;
 
 public class GUIView extends BaseView<ImageIcon> {
     private String title = "HEIG-VD Chess";
@@ -198,14 +196,14 @@ public class GUIView extends BaseView<ImageIcon> {
         JToolBar tools = new JToolBar();
         tools.setFloatable(false);
         gui.add(tools, BorderLayout.PAGE_START);
-        Action newGameAction = new AbstractAction("New game") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                clearView();
-                controller.newGame();
-            }
-        };
-        tools.add(newGameAction);
+//        Action newGameAction = new AbstractAction("New game") {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                clearView();
+//                controller.newGame();
+//            }
+//        };
+//        tools.add(newGameAction);
         tools.addSeparator();
         tools.add(headerLabel);
         tools.addSeparator();

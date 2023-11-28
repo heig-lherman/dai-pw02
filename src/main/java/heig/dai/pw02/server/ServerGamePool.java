@@ -11,6 +11,9 @@ public final class ServerGamePool {
 
     private final Queue<PlayerHandler> playerQueue = new ConcurrentLinkedQueue<>();
 
+    public ServerGamePool() {
+    }
+
     /**
      * Handle an incoming player connection.
      *
@@ -21,7 +24,7 @@ public final class ServerGamePool {
         playerQueue.add(playerHandler);
         if (playerQueue.size() >= 2) {
             var pair = new PlayerPair(playerQueue.poll(), playerQueue.poll());
-            ServerGameManager gameManager = new ServerGameManager(pair);
+            var gameManager = new ServerGameManager(pair);
             gameManager.start();
         }
     }

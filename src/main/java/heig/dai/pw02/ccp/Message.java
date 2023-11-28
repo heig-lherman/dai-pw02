@@ -1,10 +1,8 @@
-package heig.dai.pw02.model;
+package heig.dai.pw02.ccp;
 
-import heig.dai.pw02.ccp.CCPMessage;
 import heig.poo.chess.engine.util.Assertions;
-import lombok.Getter;
-
 import java.util.Arrays;
+import lombok.Getter;
 
 @Getter
 public final class Message {

@@ -47,7 +47,7 @@ public class ClientCommand implements Runnable {
         try {
             return new Socket(server, port);
         } catch (IOException e) {
-            log.error("Error while connecting to the server", e);
+            log.error("Error while connecting to the server");
             throw new UncheckedIOException(e);
         }
     }

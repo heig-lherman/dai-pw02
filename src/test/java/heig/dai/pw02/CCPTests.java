@@ -2,18 +2,16 @@ package heig.dai.pw02;
 
 import heig.dai.pw02.ccp.CCPError;
 import heig.dai.pw02.ccp.CCPMessage;
+import heig.dai.pw02.ccp.Message;
 import heig.dai.pw02.client.ServerHandler;
-import heig.dai.pw02.model.Message;
 import heig.dai.pw02.server.PlayerHandler;
 import heig.dai.pw02.server.PlayerPair;
 import heig.poo.chess.PlayerColor;
-import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.piece.Pawn;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -80,7 +78,7 @@ public class CCPTests {
             socket = new Socket("localhost", PORT);
             servers[0] = new ServerHandler(socket);
             wait_c0.release();
-            servers[0].receiveColor();
+            servers[0].awaitColor().join();
             wait_clients.release();
         } catch (Exception e){
             System.out.println("Error while connecting to the server");
@@ -95,7 +93,7 @@ public class CCPTests {
             wait_c0.acquire();
             socket = new Socket("localhost", PORT);
             servers[1] = new ServerHandler(socket);
-            servers[1].receiveColor();
+            servers[1].awaitColor().join();
             wait_clients.release();
         } catch (Exception e){
             System.out.println("Error while connecting to the server");
@@ -108,9 +106,8 @@ public class CCPTests {
     @Order(2)
     public void simpleMoveClientToServer(){
         int[] moves = {0, 0, 1, 1};
-        servers[0].addMoveToStack(moves[0], moves[1], moves[2], moves[3]);
-        servers[0].sendStack();
-        Message mString = players.get(0).receiveMove();
+        servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
+        Message mString = players.get(0).awaitMove().join();
         int[] parsedArgs = mString.getNumericArguments();
         assertEquals(mString.getType(), CCPMessage.MOVE);
         assertArrayEquals(parsedArgs, moves);
@@ -120,9 +117,8 @@ public class CCPTests {
     @Order(3)
     public void simpleMoveServerToClient(){
         int[] moves = {0, 0, 1, 3};
-        players.get(0).addMoveToStack(moves[0], moves[1], moves[2], moves[3]);
-        players.get(0).sendStack();
-        Message mString = servers[0].receiveMove();
+        players.get(0).sendMove(moves[0], moves[1], moves[2], moves[3]);
+        Message mString = servers[0].awaitMove().join();
         int[] parsedArgs = mString.getNumericArguments();
         assertEquals(mString.getType(), CCPMessage.MOVE);
         assertArrayEquals(parsedArgs, moves);
@@ -132,9 +128,8 @@ public class CCPTests {
     @Order(4)
     public void errorInvalidMessage(){
         int[] moves = {0, 0, 1, 3};
-        servers[0].addMoveToStack(moves[0], moves[1], moves[2], moves[3]);
-        servers[0].sendStack();
-        Message m = players.get(0).receivePromotion();
+        servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
+        Message m = players.get(0).awaitPromotion().join();
         assertEquals(m.getType(), CCPMessage.ERROR);
         CCPError error = CCPError.values()[m.getNumericArguments()[0]];
         assertEquals(error, CCPError.INVALID_MESSAGE);
@@ -144,9 +139,8 @@ public class CCPTests {
     @Order(5)
     public void errorInvalidMoveSamePoint(){
         int[] moves = {0, 0, 0, 0};
-        servers[0].addMoveToStack(moves[0], moves[1], moves[2], moves[3]);
-        servers[0].sendStack();
-        Message mString = players.get(0).receiveMove();
+        servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
+        Message mString = players.get(0).awaitMove().join();
         assertEquals(mString.getType(), CCPMessage.ERROR);
         CCPError error = CCPError.values()[mString.getNumericArguments()[0]];
         assertEquals(error, CCPError.INVALID_MOVE);
@@ -156,9 +150,8 @@ public class CCPTests {
     @Order(6)
     public void errorInvalidMoveOutOfBoard(){
         int[] moves = {100, 100, 100, 100};
-        servers[0].addMoveToStack(moves[0], moves[1], moves[2], moves[3]);
-        servers[0].sendStack();
-        Message mString = players.get(0).receiveMove();
+        servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
+        Message mString = players.get(0).awaitMove().join();
         assertEquals(mString.getType(), CCPMessage.ERROR);
         CCPError error = CCPError.values()[mString.getNumericArguments()[0]];
         assertEquals(error, CCPError.INVALID_MOVE);
@@ -168,9 +161,8 @@ public class CCPTests {
     @Order(7)
     public void errorInvalidReplay(){
         String replay = "Maybe";
-        servers[0].addReplayToStack(replay);
-        servers[0].sendStack();
-        Message mString = players.get(0).receiveReplay();
+        servers[0].sendReplay(replay);
+        Message mString = players.get(0).awaitReplay().join();
         assertEquals(mString.getType(), CCPMessage.ERROR);
         CCPError error = CCPError.values()[mString.getNumericArguments()[0]];
         assertEquals(error, CCPError.INVALID_REPLAY);
@@ -179,9 +171,8 @@ public class CCPTests {
     @Test
     @Order(8)
     public void errorInvalidPromotion(){
-        servers[0].addPromotionToStack(new Pawn(PlayerColor.WHITE, 0, 0));
-        servers[0].sendStack();
-        Message mString = players.get(0).receivePromotion();
+        servers[0].sendPromotion(new Pawn(PlayerColor.WHITE, 0, 0));
+        Message mString = players.get(0).awaitPromotion().join();
         assertEquals(mString.getType(), CCPMessage.ERROR);
         CCPError error = CCPError.values()[mString.getNumericArguments()[0]];
         assertEquals(error, CCPError.INVALID_PROMOTION);

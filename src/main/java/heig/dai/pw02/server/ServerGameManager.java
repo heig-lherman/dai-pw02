@@ -1,13 +1,13 @@
 package heig.dai.pw02.server;
 
-import heig.dai.pw02.model.Message;
+import heig.dai.pw02.ccp.Message;
 import heig.poo.chess.ChessView;
 import heig.poo.chess.ChessView.UserChoice;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
-import java.util.concurrent.atomic.AtomicReference;
+import heig.poo.chess.engine.util.ChessString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -51,12 +51,14 @@ public final class ServerGameManager extends GameManager {
         while (true) {
             PlayerColor currentTurn = playerTurn();
             PlayerHandler player = players.get(currentTurn);
-            Message message = player.receiveMove();
+
+            Message message = player.awaitMove().join();
             int[] parsedArgs = message.getNumericArguments();
             remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+
             PlayerHandler otherPlayer = players.get(currentTurn.opposite());
-            otherPlayer.addMoveToStack(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
-            otherPlayer.sendStack();
+            otherPlayer.sendMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+
             if (isEndGame()) {
                 askUsersToPlayAgain();
             }
@@ -65,15 +67,13 @@ public final class ServerGameManager extends GameManager {
 
     @Override
     protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
-        System.out.println(header);
-        System.out.println(question);
-        Message message = players.get(playerTurn()).receivePromotion();
+        Message message = players.get(playerTurn()).awaitPromotion().join();
         int[] parsedArgs = message.getNumericArguments();
         for (ChessPiece piece : options) {
             if (piece.getPieceType() == PieceType.values()[parsedArgs[0]]
                     && piece.getX() == parsedArgs[1]
                     && piece.getY() == parsedArgs[2]) {
-                players.get(playerTurn().opposite()).addPromotionToStack(piece);
+                players.get(playerTurn().opposite()).sendPromotion(piece);
                 return piece;
             }
         }
@@ -81,42 +81,25 @@ public final class ServerGameManager extends GameManager {
     }
 
     private void askUsersToPlayAgain() {
-        AtomicReference<Message> whiteMessage = new AtomicReference<>();
-        Thread whiteThread = new Thread(() -> {
-            whiteMessage.set(players.get(PlayerColor.WHITE).receiveReplay());
-        });
-        whiteThread.start();
-        AtomicReference<Message> blackMessage = new AtomicReference<>();
-        Thread blackThread = new Thread(() -> {
-            blackMessage.set(players.get(PlayerColor.BLACK).receiveReplay());
-        });
-        blackThread.start();
-        try {
-            whiteThread.join();
-            blackThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        String goodResponse = "Yes";
-        String badResponse = "No";
-        String whiteResponse = whiteMessage.get().getArguments()[0];
-        String blackResponse = blackMessage.get().getArguments()[0];
-        if (whiteResponse.equals(goodResponse) && blackResponse.equals(goodResponse)) {
-            players.get(PlayerColor.WHITE).addReplayToStack(goodResponse);
-            players.get(PlayerColor.BLACK).addReplayToStack(goodResponse);
+        var whitePlayer = players.white();
+        var blackPlayer = players.black();
+
+        // Await the replay message from both players
+        var whiteAnswer = whitePlayer.awaitReplay();
+        var blackAnswer = blackPlayer.awaitReplay();
+        String whiteResponse = whiteAnswer.join().getArguments()[0];
+        String blackResponse = blackAnswer.join().getArguments()[0];
+
+        if (whiteResponse.equals(ChessString.YES) && blackResponse.equals(ChessString.YES)) {
+            whitePlayer.sendReplay(ChessString.YES);
+            blackPlayer.sendReplay(ChessString.YES);
             restartGame();
         } else {
-            players.get(PlayerColor.WHITE).addReplayToStack(badResponse);
-            players.get(PlayerColor.BLACK).addReplayToStack(badResponse);
-            players.get(PlayerColor.WHITE).sendStack();
-            players.get(PlayerColor.BLACK).sendStack();
+            whitePlayer.sendReplay(ChessString.NO);
+            blackPlayer.sendReplay(ChessString.NO);
             System.exit(0);
         }
-        players.get(PlayerColor.WHITE).sendStack();
-        players.get(PlayerColor.BLACK).sendStack();
     }
-
-    // -- Overrides for compatibility with the fact that it is a network server game
 
     @Override
     protected UserChoice askUserToPlayAgain(String header, String question, UserChoice[] options) {

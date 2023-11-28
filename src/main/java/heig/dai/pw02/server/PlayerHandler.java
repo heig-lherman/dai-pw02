@@ -1,13 +1,12 @@
 package heig.dai.pw02.server;
 
-import heig.dai.pw02.ccp.CCPMessage;
 import heig.dai.pw02.ccp.CCPHandler;
-import heig.dai.pw02.model.Message;
+import heig.dai.pw02.ccp.CCPMessage;
+import heig.dai.pw02.ccp.Message;
 import heig.poo.chess.PlayerColor;
-
 import java.net.Socket;
 
-public class PlayerHandler extends CCPHandler {
+public final class PlayerHandler extends CCPHandler {
 
     public PlayerHandler(Socket playerConnection) {
         super(playerConnection);

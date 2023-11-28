@@ -1,7 +1,7 @@
 package heig.dai.pw02.client;
 
-import heig.dai.pw02.ccp.CCPError;
-import heig.dai.pw02.model.Message;
+import heig.dai.pw02.ccp.Message;
+import heig.poo.chess.ChessView;
 import heig.poo.chess.ChessView.UserChoice;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
@@ -9,7 +9,6 @@ import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.ChessString;
 import heig.poo.chess.views.gui.GUIView;
-
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,16 +20,21 @@ public class ClientGameManager extends GameManager {
     private boolean boardIsBlocked = false;
 
     public ClientGameManager(ServerHandler server) {
-        super();
         this.server = server;
-        this.myColor = server.receiveColor();
+        log.info("Waiting to get a color from the server");
+        this.myColor = server.awaitColor().join();
     }
 
     /**
      * Function used to start the game. In the case of a remote game, we start the GUIView and listen to the server.
      */
     public void start() {
-        super.start(new GUIView(this, "Client - " + myColor.toString()));
+        start(new GUIView(this, "Client - " + myColor.toString()));
+    }
+
+    @Override
+    public void start(ChessView view) {
+        super.start(view);
         if (myColor == PlayerColor.BLACK) {
             listenMove();
         }
@@ -40,9 +44,10 @@ public class ClientGameManager extends GameManager {
      * Function used to listen to the server and make the move sent by the server.
      */
     private void listenMove() {
-        Message message = server.receiveMove();
-        int[] parsedArgs = message.getNumericArguments();
-        remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+        server.awaitMove().thenAccept(message -> {
+            int[] parsedArgs = message.getNumericArguments();
+            remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+        });
     }
 
     /**
@@ -70,12 +75,14 @@ public class ClientGameManager extends GameManager {
             return false;
         }
 
-        if (remoteMove(fromX, fromY, toX, toY)) {
-            if (!isEndGame()) {
-                new Thread(this::listenMove).start();
+        if (super.move(fromX, fromY, toX, toY)) {
+            server.sendMove(fromX, fromY, toX, toY);
+            if (isEndGame()) {
+                postGameActions();
+            } else {
+                listenMove();
             }
-            server.addMoveToStack(fromX, fromY, toX, toY);
-            server.sendStack();
+
             return true;
         }
 
@@ -91,21 +98,21 @@ public class ClientGameManager extends GameManager {
      * @param options  the options
      * @return a piece of the type chosen by the user
      */
-
     @Override
     protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
-        ChessPiece movingPiece = super.board.getPiece(options[0].getX(), options[0].getY());
+        ChessPiece movingPiece = board.getPiece(options[0].getX(), options[0].getY());
         if (Objects.isNull(movingPiece)) {
             return null;
         }
+
         if (movingPiece.getPlayerColor() == myColor) {
             ChessPiece choice = super.askUserForPromotion(header, question, options);
-            server.addPromotionToStack(choice);
+            server.sendPromotion(choice);
             return choice;
         }
-        System.out.println(header);
-        System.out.println(question);
-        Message message = server.receivePromotion();
+
+        log.debug("Waiting for the other player to choose a promotion");
+        Message message = server.awaitPromotion().join();
         int[] parsedArgs = message.getNumericArguments();
         PieceType pieceType = PieceType.values()[parsedArgs[0]];
         for (ChessPiece piece : options) {
@@ -113,6 +120,7 @@ public class ClientGameManager extends GameManager {
                 return piece;
             }
         }
+
         return null;
     }
 
@@ -127,21 +135,13 @@ public class ClientGameManager extends GameManager {
      */
     @Override
     protected UserChoice askUserToPlayAgain(String header, String question, UserChoice[] choices) {
-        System.out.println(header);
-        System.out.println(question);
         UserChoice choice = super.askUserToPlayAgain(header, question, choices);
-        server.addReplayToStack(choice.textValue());
-        server.sendStack();
-        if (choice.textValue().equals("No")) {
-            super.chessView.displayMessage("Exiting the game");
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        server.sendReplay(choice.textValue());
+        if (choice.textValue().equals(ChessString.NO)) {
             server.disconnect();
             System.exit(0);
         }
+
         return choice;
     }
 
@@ -153,20 +153,15 @@ public class ClientGameManager extends GameManager {
     protected void postGameActions() {
         super.postGameActions();
         boardIsBlocked = true;
-        super.chessView.displayMessage("Waiting for the other player to choose");
-        Message otherPlayerReplay = server.receiveReplay();
+        chessView.displayMessage("Waiting for the other player to choose");
+        Message otherPlayerReplay = server.awaitReplay().join();
         String replay = otherPlayerReplay.getArguments()[0];
-        if (replay.equals("No")) {
-            super.chessView.displayMessage("Players are not in agreement. Exiting the game");
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        if (replay.equals(ChessString.NO)) {
             System.exit(0);
         }
+
         boardIsBlocked = false;
-        super.chessView.displayMessage(ChessString.playerToMove(playerTurn()));
+        chessView.displayMessage(ChessString.playerToMove(playerTurn()));
         if (myColor == PlayerColor.BLACK) {
             listenMove();
         }
@@ -185,12 +180,8 @@ public class ClientGameManager extends GameManager {
      */
     private boolean remoteMove(int fromX, int fromY, int toX, int toY) {
         boolean result = super.move(fromX, fromY, toX, toY);
-        if(!result) {
-            server.createErrorMessage(CCPError.INVALID_MOVE);
-            return false;
-        }
         if (isEndGame()) {
-            new Thread(this::postGameActions).start();
+            postGameActions();
         }
         return result;
     }

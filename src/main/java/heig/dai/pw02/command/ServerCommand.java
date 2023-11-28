@@ -33,7 +33,7 @@ public class ServerCommand implements Callable<Integer> {
         ServerGamePool pool = new ServerGamePool();
         log.info("Starting server on port {}", port);
         try(var serverSocket = new ServerSocket(port)) {
-            while (true) {
+            while (!serverSocket.isClosed()) {
                 try {
                     var clientSocket = serverSocket.accept();
                     log.info("New connection from {}", clientSocket.getInetAddress());
@@ -46,5 +46,7 @@ public class ServerCommand implements Callable<Integer> {
             log.error("Error while creating server socket", e);
             return 1;
         }
+
+        return 0;
     }
 }
