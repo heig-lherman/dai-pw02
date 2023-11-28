@@ -1,5 +1,8 @@
 package heig.dai.pw02.ccp;
 
+import lombok.Getter;
+
+@Getter
 public enum CCPError {
     INVALID_MESSAGE("Invalid message"),
     INVALID_NBR_ARGUMENTS("Invalid number of arguments"),
@@ -15,7 +18,7 @@ public enum CCPError {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
+    public String toString() {
+        return "Error: " + this.name() + " - " + this.description;
     }
 }

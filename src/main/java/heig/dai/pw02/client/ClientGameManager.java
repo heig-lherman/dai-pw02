@@ -1,7 +1,7 @@
 package heig.dai.pw02.client;
 
+import heig.dai.pw02.ccp.CCPError;
 import heig.dai.pw02.model.Message;
-import heig.poo.chess.ChessView;
 import heig.poo.chess.ChessView.UserChoice;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
@@ -185,6 +185,10 @@ public class ClientGameManager extends GameManager {
      */
     private boolean remoteMove(int fromX, int fromY, int toX, int toY) {
         boolean result = super.move(fromX, fromY, toX, toY);
+        if(!result) {
+            server.createErrorMessage(CCPError.INVALID_MOVE);
+            return false;
+        }
         if (isEndGame()) {
             new Thread(this::postGameActions).start();
         }
