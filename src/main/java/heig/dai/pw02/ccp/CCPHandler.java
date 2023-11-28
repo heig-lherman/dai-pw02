@@ -4,7 +4,6 @@ import heig.dai.pw02.model.Message;
 import heig.dai.pw02.socket.SocketManager;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.engine.piece.ChessPiece;
-import heig.poo.chess.engine.util.Assertions;
 import heig.poo.chess.engine.util.Board;
 import lombok.extern.slf4j.Slf4j;
 
