@@ -3,7 +3,6 @@ package heig.dai.pw02.ccp;
 import heig.dai.pw02.socket.SocketManager;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.engine.piece.ChessPiece;
-import heig.poo.chess.engine.util.Assertions;
 import heig.poo.chess.engine.util.Board;
 import heig.poo.chess.engine.util.ChessString;
 import java.io.IOException;
@@ -73,6 +72,7 @@ public abstract class CCPHandler {
 
     /**
      * Send a promotion to the other player, but only once the move has been sent.
+     *
      * @param piece the piece to promote to
      */
     public final void sendPromotion(ChessPiece piece) {
@@ -96,33 +96,38 @@ public abstract class CCPHandler {
     /**
      * First level of verification of the message. Check if the type is the expected one and if the number of arguments
      * is the expected one. The
+     *
      * @param message the message to check
-     * @param type the expected type
+     * @param type    the expected type
      * @return true if the message is valid, false otherwise
      */
     private Message checkMessage(Message message, CCPMessage type) {
         CCPMessage messageType = message.getType();
         String[] argumentsString = message.getArguments();
-        if(!messageType.equals(type)) {
+        if (!messageType.equals(type)) {
             return createErrorMessage(CCPError.INVALID_MESSAGE);
         }
-        if(argumentsString.length != type.nbrArguments()) {
+
+        if (argumentsString.length != type.nbrArguments()) {
             return createErrorMessage(CCPError.INVALID_NBR_ARGUMENTS);
         }
-        if(messageType.equals(CCPMessage.PROMOTION)) {
+
+        if (messageType.equals(CCPMessage.PROMOTION)) {
             int[] arguments = message.getNumericArguments();
-            if(!PieceType.values()[arguments[0]].equals(PieceType.QUEEN)
+            if (!PieceType.values()[arguments[0]].equals(PieceType.QUEEN)
                     && !PieceType.values()[arguments[0]].equals(PieceType.ROOK)
                     && !PieceType.values()[arguments[0]].equals(PieceType.BISHOP)
-                    && !PieceType.values()[arguments[0]].equals(PieceType.KNIGHT)){
+                    && !PieceType.values()[arguments[0]].equals(PieceType.KNIGHT)) {
                 return createErrorMessage(CCPError.INVALID_PROMOTION);
             }
         }
-        if(messageType.equals(CCPMessage.REPLAY)
+
+        if (messageType.equals(CCPMessage.REPLAY)
                 && !(argumentsString[0].equals(ChessString.YES) || argumentsString[0].equals(ChessString.NO))) {
             return createErrorMessage(CCPError.INVALID_REPLAY);
         }
-        if(messageType.equals(CCPMessage.MOVE)) {
+
+        if (messageType.equals(CCPMessage.MOVE)) {
             int[] arguments = message.getNumericArguments();
             for (int argument : arguments) {
                 if (argument < 0 || argument > Board.BOARD_SIZE - 1) {
@@ -133,6 +138,7 @@ public abstract class CCPHandler {
                 return createErrorMessage(CCPError.INVALID_MOVE);
             }
         }
+
         return message;
     }
 }
