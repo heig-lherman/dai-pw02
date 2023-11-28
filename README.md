@@ -6,7 +6,7 @@ This is a CLI that allows you to launch a chess server and a chess client.
 
 ### Lombok
 
-This project uses [Lombok](https://projectlombok.org/) to generate boilerplate code. 
+This project uses [Lombok](https://projectlombok.org/) to generate boilerplate code.
 When opening this project in IntelliJ, annotation processing is recommended.
 Maven will compile the project without any additional configuration.
 
@@ -46,7 +46,7 @@ The CLI supports the following commands:
 The server will only handle one game at a time in this implementation of the protocol.
 If two clients connect, they will be able to play together.
 
-The server command has one argument, the port to listen on. 
+The server command has one argument, the port to listen on.
 By default, it is the protocol's standard port, which is 6343.
 
 The server will output the state of the game in its standard output.
@@ -91,35 +91,35 @@ In this basic implementation, the server will shut down when the game is over.
 * ```COLOR <color>``` :  The server sends the color of the player to the client when there are two players connected.
     * ```<color>``` : WHITE or BLACK
 * ```MOVE <fromX> <fromY> <toX> <toY>``` : The server sends the move of the opponent to the client. All coordinates must
-be between 0 and 7.
+  be between 0 and 7.
     * ```<fromX>``` : The X coordinate of the piece to move.
     * ```<fromY>``` : The Y coordinate of the piece to move.
     * ```<toX>``` : The X coordinate of the destination.
     * ```<toY>``` : The Y coordinate of the destination.
 * ```PROMOTION <ordinalPieceType> <toX> <toY>``` : The server sends the promotion of the opponent to the client. All
-coordinates must be between 0 and 7. Will only be sent to the server if there is a move before.
+  coordinates must be between 0 and 7. Will only be sent to the server if there is a move before.
     * ```<ordinalPieceType>``` : The ordinal of the piece type.
-      *  ```1``` : Rook
-      *  ```2``` : Knight
-      *  ```3``` : Bishop
-      *  ```4``` : Queen
+        *  ```1``` : Rook
+        *  ```2``` : Knight
+        *  ```3``` : Bishop
+        *  ```4``` : Queen
     * ```<toX>``` : The X coordinate of the destination.
     * ```<toY>``` : The Y coordinate of the destination.
 * ```REPLAY <answer>``` : The server sends "Yes" to the client if both players want to play again, otherwise "No".
     * ```<answer>``` : Yes or No
 * ```ERROR <errorOrdinal>``` : The client will create an error message with the error type. The received message will
-be replaced by the error message. The message will not be sent to the server.
+  be replaced by the error message. The message will not be sent to the server.
     * ```<errorOrdinal>``` : The ordinal of the error type.
-      *  ```1``` : INVALID_MESSAGE - Shown if the message is not the spectated one or if the message is not in the list.
-      *  ```2``` : INVALID_NBR_ARGUMENTS - Shown if the number of arguments is not the expected one.
-      *  ```3``` : INVALID_MOVE - Shown if the move is not valid.
-      *  ```4``` : INVALID_PROMOTION - Shown if the piece type is not valid.
-      *  ```5``` : INVALID_REPLAY - Shown if the replay answer is not valid.
-      *  ```6``` : INVALID_COLOR - Shown if the color is not valid.
+        *  ```1``` : INVALID_MESSAGE - Shown if the message is not the spectated one or if the message is not in the list.
+        *  ```2``` : INVALID_NBR_ARGUMENTS - Shown if the number of arguments is not the expected one.
+        *  ```3``` : INVALID_MOVE - Shown if the move is not valid.
+        *  ```4``` : INVALID_PROMOTION - Shown if the piece type is not valid.
+        *  ```5``` : INVALID_REPLAY - Shown if the replay answer is not valid.
+        *  ```6``` : INVALID_COLOR - Shown if the color is not valid.
 
 ### Client to server
 * ```MOVE <fromX> <fromY> <toX> <toY>``` : The client sends the that he has done to the server. All coordinates must be
-between 0 and 7.
+  between 0 and 7.
     * ```<fromX>``` : The X coordinate of the piece to move.
     * ```<fromY>``` : The Y coordinate of the piece to move.
     * ```<toX>``` : The X coordinate of the destination.
@@ -159,7 +159,8 @@ sequenceDiagram
             Server ->> Black: PROMOTION PieceType toX toY
         end
         else moveNotValid
-        White ->> White: print(Move invalid)
+        White ->>+ Server: MOVE fromX fromY toX toY
+        Server ->>- Server: print(Move invalid)
     end
     Note over White,Black: The same will happen from Black to White until EndGame.
         alt PLAY AGAIN
