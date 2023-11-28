@@ -178,13 +178,11 @@ public class ClientGameManager extends GameManager {
      * @param fromY the y coordinate of the piece to move
      * @param toX   the x coordinate of the destination
      * @param toY   the y coordinate of the destination
-     * @return true if the move is valid, false otherwise
      */
-    private boolean remoteMove(int fromX, int fromY, int toX, int toY) {
-        boolean result = super.move(fromX, fromY, toX, toY);
+    private void remoteMove(int fromX, int fromY, int toX, int toY) {
+        super.move(fromX, fromY, toX, toY);
         if (isEndGame()) {
             postGameActions();
         }
-        return result;
     }
 }
