@@ -1,53 +1,75 @@
 package heig.dai.pw02.socket;
 
-import heig.dai.pw02.model.Message;
+import heig.dai.pw02.ccp.Message;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
-public class SocketManager {
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public final class SocketManager implements Closeable {
+
     private final Socket socket;
     private final BufferedReader input;
-    private final BufferedWriter output;
-    private final static String EOT = "\u0004";
-    private final static String BREAK = "\n";
+    private final PrintWriter output;
 
     public SocketManager(Socket socket) {
         this.socket = socket;
         try {
-            this.input = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-            this.output = new BufferedWriter(new OutputStreamWriter(this.socket.getOutputStream()));
+            this.input = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            this.output = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.out.println("Error while creating socket manager");
-            throw new RuntimeException(e);
+            log.error("Error while creating socket manager");
+            throw new UncheckedIOException(e);
         }
     }
 
-    public boolean isConnected() {
-        return this.socket.isConnected();
+    @Override
+    public void close() throws IOException {
+        input.close();
+        output.close();
+        socket.close();
     }
 
-    public void closeSocket() throws IOException {
-        this.socket.close();
-        this.input.close();
-        this.output.flush();
-        this.output.close();
+    /**
+     * Check if the socket is closed.
+     *
+     * @return true if the socket is closed, false otherwise
+     */
+    public boolean isClosed() {
+        return socket.isClosed();
     }
 
+    /**
+     * Send a message to the socket.
+     *
+     * @param message the message to send
+     */
     public void send(Message message) {
-        try{
-            this.output.write(message.toString() + BREAK);
-            this.output.flush();
-            System.out.println("Sent: " + message.toString());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        output.println(message.toString());
+        log.debug("Sent: {}", message);
     }
 
-    public Message read(){
-        try{
+    /**
+     * Read a message from the socket.
+     *
+     * @return the message read from the socket, or null if the socket was disconnected.
+     */
+    public Message read() {
+        try {
             String line = input.readLine();
-            System.out.println("Received: " + line);
+            log.debug("Received: {}", line);
+            if (line == null) {
+                return null;
+            }
+
             return Message.parse(line);
         } catch (IOException e) {
             throw new RuntimeException(e);

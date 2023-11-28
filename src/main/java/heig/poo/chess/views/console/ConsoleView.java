@@ -16,7 +16,7 @@ public class ConsoleView extends BaseView<String> {
         private String value;
 
         private StringResource(String value, PlayerColor color) {
-            this.value = (color == PlayerColor.BLACK ? "\u001B[31m" : "") + value + "\u001B[30m";
+            this.value = (color == PlayerColor.BLACK ? "\u001B[31m" : "") + value + "\u001B[0m";
         }
 
         @Override
@@ -113,7 +113,7 @@ public class ConsoleView extends BaseView<String> {
     }
 
 
-    private void printBoard() {
+    protected void printBoard() {
         for (int y = 7; y >= 0; --y) {
             System.out.print(y + 1 + " |");
             for (int x = 0; x < 8; ++x) {

@@ -1,15 +1,16 @@
 package heig.dai.pw02.server;
 
-import heig.dai.pw02.model.Message;
+import heig.dai.pw02.ccp.Message;
 import heig.poo.chess.ChessView;
+import heig.poo.chess.ChessView.UserChoice;
 import heig.poo.chess.PieceType;
 import heig.poo.chess.PlayerColor;
 import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
-import heig.poo.chess.views.gui.GUIView;
+import heig.poo.chess.engine.util.ChessString;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.atomic.AtomicReference;
-
+@Slf4j
 public final class ServerGameManager extends GameManager {
 
     private final PlayerPair players;
@@ -20,19 +21,29 @@ public final class ServerGameManager extends GameManager {
         this.players.sendColors();
     }
 
+    /**
+     * Helper to start a game since this manager has a hard-coded view.
+     */
     public void start() {
-        super.start(new GUIView(this, "Server"));
+        start(null);
+    }
+
+    @Override
+    public void start(ChessView view) {
+        // the server console view is a very restrictive view that will never make moves
+        super.start(new ServerConsoleView(this));
         listenToPlayer();
     }
 
     public void remoteMove(int fromX, int fromY, int toX, int toY) {
-        PlayerColor colorMoving = super.board.getPiece(fromX, fromY).getPlayerColor();
+        PlayerColor colorMoving = board.getPiece(fromX, fromY).getPlayerColor();
         if (super.move(fromX, fromY, toX, toY)) {
-            System.out.println(colorMoving + " has moved");
-            System.out.println("Move sent to player " + playerTurn());
-            System.out.println("Waiting for player " + playerTurn() + " to move");
-        }else {
-            System.out.println("Invalid move");
+            log.info("{} has moved", colorMoving);
+            log.debug("Move sent to player {}", playerTurn());
+            log.debug("Waiting for player {} to move", playerTurn());
+            ((ServerConsoleView) chessView).printBoard();
+        } else {
+            log.warn("{} sent an invalid move", colorMoving);
         }
     }
 
@@ -40,84 +51,61 @@ public final class ServerGameManager extends GameManager {
         while (true) {
             PlayerColor currentTurn = playerTurn();
             PlayerHandler player = players.get(currentTurn);
-            Message message = player.receiveMove();
-            Integer[] parsedArgs = Message.parseArgumentsToInt(message);
+
+            Message message = player.awaitMove().join();
+            int[] parsedArgs = message.getNumericArguments();
             remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+
             PlayerHandler otherPlayer = players.get(currentTurn.opposite());
-            otherPlayer.addMoveToStack(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
-            otherPlayer.sendStack();
-            if(isEndGame()){
+            otherPlayer.sendMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
+
+            if (isEndGame()) {
                 askUsersToPlayAgain();
             }
         }
     }
 
     @Override
-    public boolean move(int fromX, int fromY, int toX, int toY) {
-        return false;
-    }
-
-    @Override
     protected ChessPiece askUserForPromotion(String header, String question, ChessPiece[] options) {
-        System.out.println(header);
-        System.out.println(question);
-        Message message = players.get(playerTurn()).receivePromotion();
-        String[] parsedArgs = message.arguments().split(" ");
-        PieceType pieceType = PieceType.valueOf(parsedArgs[0]);
-        int x = Integer.parseInt(parsedArgs[1]);
-        int y = Integer.parseInt(parsedArgs[2]);
+        Message message = players.get(playerTurn()).awaitPromotion().join();
+        int[] parsedArgs = message.getNumericArguments();
         for (ChessPiece piece : options) {
-            if (piece.getPieceType() == pieceType && piece.getX() == x && piece.getY() == y) {
-                players.get(playerTurn().opposite()).addPromotionToStack(piece);
+            if (piece.getPieceType() == PieceType.values()[parsedArgs[0]]
+                    && piece.getX() == parsedArgs[1]
+                    && piece.getY() == parsedArgs[2]) {
+                players.get(playerTurn().opposite()).sendPromotion(piece);
                 return piece;
             }
         }
         return null;
     }
 
-    /**
-     * In order to avoid the blocking of the server, we don't ask the user to play again. We send the move to the
-     * client and then ask the clients if they want to play again with askUsersToPlayAgain().
-     * @return null
-     */
-    @Override
-    protected ChessView.UserChoice askUserToPlayAgain(String header, String question, ChessView.UserChoice[] options) {
-        return null;
-    }
-
     private void askUsersToPlayAgain() {
-        AtomicReference<Message> whiteMessage = new AtomicReference<>();
-        Thread whiteThread = new Thread(() -> {
-            whiteMessage.set(players.get(PlayerColor.WHITE).receiveReplay());
-        });
-        whiteThread.start();
-        AtomicReference<Message> blackMessage = new AtomicReference<>();
-        Thread blackThread = new Thread(() -> {
-            blackMessage.set(players.get(PlayerColor.BLACK).receiveReplay());
-        });
-        blackThread.start();
-        try {
-            whiteThread.join();
-            blackThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        String goodResponse = "Yes";
-        String badResponse = "No";
-        String whiteResponse = Message.parseArgumentsToString(whiteMessage.get())[0];
-        String blackResponse = Message.parseArgumentsToString(blackMessage.get())[0];
-        if (whiteResponse.equals(goodResponse) && blackResponse.equals(goodResponse)) {
-            players.get(PlayerColor.WHITE).addReplayToStack(goodResponse);
-            players.get(PlayerColor.BLACK).addReplayToStack(goodResponse);
+        var whitePlayer = players.white();
+        var blackPlayer = players.black();
+
+        // Await the replay message from both players
+        var whiteAnswer = whitePlayer.awaitReplay();
+        var blackAnswer = blackPlayer.awaitReplay();
+        String whiteResponse = whiteAnswer.join().getArguments()[0];
+        String blackResponse = blackAnswer.join().getArguments()[0];
+
+        if (whiteResponse.equals(ChessString.YES) && blackResponse.equals(ChessString.YES)) {
+            whitePlayer.sendReplay(ChessString.YES);
+            blackPlayer.sendReplay(ChessString.YES);
             restartGame();
-        }else{
-            players.get(PlayerColor.WHITE).addReplayToStack(badResponse);
-            players.get(PlayerColor.BLACK).addReplayToStack(badResponse);
-            players.get(PlayerColor.WHITE).sendStack();
-            players.get(PlayerColor.BLACK).sendStack();
+        } else {
+            whitePlayer.sendReplay(ChessString.NO);
+            blackPlayer.sendReplay(ChessString.NO);
             System.exit(0);
         }
-        players.get(PlayerColor.WHITE).sendStack();
-        players.get(PlayerColor.BLACK).sendStack();
+    }
+
+    @Override
+    protected UserChoice askUserToPlayAgain(String header, String question, UserChoice[] options) {
+        // NOTE: In order to avoid the blocking of the server, we don't ask the user to play again.
+        //       We send the move to the client and then ask the clients if they want to play again
+        //       with askUsersToPlayAgain().
+        return null;
     }
 }
