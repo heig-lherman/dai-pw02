@@ -1,7 +1,9 @@
 package heig.dai.pw02.ccp;
 
 import heig.poo.chess.engine.util.Assertions;
+
 import java.util.Arrays;
+
 import lombok.Getter;
 
 @Getter
@@ -27,6 +29,7 @@ public final class Message {
 
     /**
      * Helper method that returns the arguments parsed from String to Integer
+     *
      * @return the arguments of the message parsed as integers
      */
     public int[] getNumericArguments() {

@@ -1,8 +1,10 @@
 package heig.dai.pw02.ccp;
 
 import heig.dai.pw02.socket.SocketManager;
+import heig.poo.chess.PieceType;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.Assertions;
+import heig.poo.chess.engine.util.Board;
 import heig.poo.chess.engine.util.ChessString;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -44,13 +46,8 @@ public abstract class CCPHandler {
                 log.warn("A client got disconnected");
                 System.exit(2);
             }
-
-            if (message.getType() == type) {
-                return message;
-            }
-
-            log.warn("Received message of type {} instead of {}", message.getType(), type);
-            return null;
+            Message result = checkMessage(message, type);
+            return result;
         });
     }
 
@@ -87,10 +84,55 @@ public abstract class CCPHandler {
     }
 
     public final void sendReplay(String replay) {
-        Assertions.assertTrue(
-                replay.equals(ChessString.YES) || replay.equals(ChessString.NO),
-                "Replay must be Yes or No"
-        );
         sendMessage(Message.of(CCPMessage.REPLAY, replay));
+    }
+
+    public Message createErrorMessage(CCPError error) {
+        Message toReturn = Message.of(CCPMessage.ERROR, error.ordinal());
+        log.error("{} - {}", toReturn, error.toString());
+        return toReturn;
+    }
+
+    /**
+     * First level of verification of the message. Check if the type is the expected one and if the number of arguments
+     * is the expected one. The
+     * @param message the message to check
+     * @param type the expected type
+     * @return true if the message is valid, false otherwise
+     */
+    private Message checkMessage(Message message, CCPMessage type) {
+        CCPMessage messageType = message.getType();
+        String[] argumentsString = message.getArguments();
+        if(!messageType.equals(type)) {
+            return createErrorMessage(CCPError.INVALID_MESSAGE);
+        }
+        if(argumentsString.length != type.nbrArguments()) {
+            return createErrorMessage(CCPError.INVALID_NBR_ARGUMENTS);
+        }
+        if(messageType.equals(CCPMessage.PROMOTION)) {
+            int[] arguments = message.getNumericArguments();
+            if(!PieceType.values()[arguments[0]].equals(PieceType.QUEEN)
+                    && !PieceType.values()[arguments[0]].equals(PieceType.ROOK)
+                    && !PieceType.values()[arguments[0]].equals(PieceType.BISHOP)
+                    && !PieceType.values()[arguments[0]].equals(PieceType.KNIGHT)){
+                return createErrorMessage(CCPError.INVALID_PROMOTION);
+            }
+        }
+        if(messageType.equals(CCPMessage.REPLAY)
+                && !(argumentsString[0].equals(ChessString.YES) || argumentsString[0].equals(ChessString.NO))) {
+            return createErrorMessage(CCPError.INVALID_REPLAY);
+        }
+        if(messageType.equals(CCPMessage.MOVE)) {
+            int[] arguments = message.getNumericArguments();
+            for (int argument : arguments) {
+                if (argument < 0 || argument > Board.BOARD_SIZE - 1) {
+                    return createErrorMessage(CCPError.INVALID_MOVE);
+                }
+            }
+            if (arguments[0] == arguments[2] && arguments[1] == arguments[3]) {
+                return createErrorMessage(CCPError.INVALID_MOVE);
+            }
+        }
+        return message;
     }
 }

@@ -1,6 +1,7 @@
 package heig.dai.pw02.socket;
 
 import heig.dai.pw02.ccp.Message;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -38,6 +40,7 @@ public final class SocketManager implements Closeable {
 
     /**
      * Check if the socket is closed.
+     *
      * @return true if the socket is closed, false otherwise
      */
     public boolean isClosed() {
@@ -46,6 +49,7 @@ public final class SocketManager implements Closeable {
 
     /**
      * Send a message to the socket.
+     *
      * @param message the message to send
      */
     public void send(Message message) {
@@ -55,6 +59,7 @@ public final class SocketManager implements Closeable {
 
     /**
      * Read a message from the socket.
+     *
      * @return the message read from the socket, or null if the socket was disconnected.
      */
     public Message read() {

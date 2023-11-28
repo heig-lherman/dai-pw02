@@ -9,7 +9,9 @@ import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.ChessString;
 import heig.poo.chess.views.gui.GUIView;
+
 import java.util.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
