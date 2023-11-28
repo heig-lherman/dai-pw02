@@ -69,10 +69,11 @@ public final class SocketManager implements Closeable {
             if (line == null) {
                 return null;
             }
-
             return Message.parse(line);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.warn("A client got disconnected");
+            System.exit(0);
         }
+        return null;
     }
 }
