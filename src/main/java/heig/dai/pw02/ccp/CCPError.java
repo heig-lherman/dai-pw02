@@ -9,7 +9,8 @@ public enum CCPError {
     INVALID_MOVE("Invalid move"),
     INVALID_PROMOTION("Invalid promotion"),
     INVALID_REPLAY("Invalid replay"),
-    INVALID_COLOR("Invalid color");
+    INVALID_COLOR("Invalid color"),
+    DISCONNECTED("Opponent disconnected");
 
     private final String description;
 

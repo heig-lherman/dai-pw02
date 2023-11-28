@@ -45,8 +45,12 @@ public abstract class CCPHandler {
                 log.warn("A client got disconnected");
                 System.exit(2);
             }
-            Message result = checkMessage(message, type);
-            return result;
+            if (message.getType().equals(CCPMessage.ERROR)) {
+                return message;
+            } else {
+                return checkMessage(message, type);
+
+            }
         });
     }
 
