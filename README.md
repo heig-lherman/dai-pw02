@@ -1,7 +1,90 @@
 # Practical Work 2 - Chess server
-## Overview
-## Transport protocol
-## Messages
+
+This is a CLI that allows you to launch a chess server and a chess client.
+
+## Dependencies
+
+### Lombok
+
+This project uses [Lombok](https://projectlombok.org/) to generate boilerplate code. 
+When opening this project in IntelliJ, annotation processing is recommended.
+Maven will compile the project without any additional configuration.
+
+## Build the JAR
+
+To build the JAR, run the following command from the root of the repository:
+
+```shell
+./mvnw clean package
+```
+
+## Running
+
+To run the JAR, run the following command from the root of the repository:
+
+```shell
+java -jar target/pw-mp-chess-1.0.0-SNAPSHOT.jar <command>
+```
+
+## Usage
+
+The CLI methods are documented in the form of usage messages, given using the `--help` flag.
+
+```shell
+java -jar target/pw-mp-chess-1.0.0-SNAPSHOT.jar --help
+```
+
+### Commands
+
+The CLI supports the following commands:
+
+- `server`: Creates a server instance, ready to accept connections.
+- `client`: Creates a client instance, expects the server to be available first.
+
+#### Server
+
+The server will only handle one game at a time in this implementation of the protocol.
+If two clients connect, they will be able to play together.
+
+The server command has one argument, the port to listen on. 
+By default, it is the protocol's standard port, which is 6343.
+
+The server will output the state of the game in its standard output.
+
+#### Client
+
+The client command has two arguments, the host and the port to connect to.
+The host is defaulted to localhost for convenience, but can be changed to connect to a remote server.
+The port is defaulted to the protocol's standard port, which is 6343.
+
+The client starts a GUI that allows the user to play the game.
+
+### Example
+
+Let's create a server instance on the default port.
+
+```shell
+java -jar target/pw-mp-chess-1.0.0-SNAPSHOT.jar server
+```
+
+The server will add a log line when it is ready to accept connections.
+
+Now we need to start two clients, one for each player.
+
+```shell
+java -jar target/pw-mp-chess-1.0.0-SNAPSHOT.jar client &
+java -jar target/pw-mp-chess-1.0.0-SNAPSHOT.jar client &
+```
+
+The clients will connect to the server and start a game.
+Two GUIs will open, one for each player.
+
+In this basic implementation, the server will shut down when the game is over.
+
+## Protocol
+
+> [!NOTE]
+> The complete version of the protocol is available in [this document](./doc/protocol.pdf).
 
 ### Server to client
 
@@ -24,9 +107,9 @@ coordinates must be between 0 and 7. Will only be sent to the server if there is
     * ```<toY>``` : The Y coordinate of the destination.
 * ```REPLAY <answer>``` : The server sends "Yes" to the client if both players want to play again, otherwise "No".
     * ```<answer>``` : Yes or No
-* ```ERROR <orsinalErrorType>``` : The client will create an error message with the error type. The received message will
+* ```ERROR <errorOrdinal>``` : The client will create an error message with the error type. The received message will
 be replaced by the error message. The message will not be sent to the server.
-    * ```<orsinalErrorType>``` : The ordinal of the error type.
+    * ```<errorOrdinal>``` : The ordinal of the error type.
       *  ```1``` : INVALID_MESSAGE - Shown if the message is not the spectated one or if the message is not in the list.
       *  ```2``` : INVALID_NBR_ARGUMENTS - Shown if the number of arguments is not the expected one.
       *  ```3``` : INVALID_MOVE - Shown if the move is not valid.
@@ -49,15 +132,6 @@ between 0 and 7.
         *  ```4``` : Queen
 * ```REPLAY <answer>``` : The client sends "Yes" to the server if he wants to play again, otherwise "No".
     * ```<answer>``` : Yes or No
-* ```ERROR <orsinalErrorType>``` : The client will create an error message with the error type. The received message will
-  be replaced by the error message. The message will not be sent to the server.
-    * ```<orsinalErrorType>``` : The ordinal of the error type.
-        *  ```1``` : INVALID_MESSAGE - Shown if the message is not the spectated one or if the message is not in the list.
-        *  ```2``` : INVALID_NBR_ARGUMENTS - Shown if the number of arguments is not the expected one.
-        *  ```3``` : INVALID_MOVE - Shown if the move is not valid.
-        *  ```4``` : INVALID_PROMOTION - Shown if the piece type is not valid.
-        *  ```5``` : INVALID_REPLAY - Shown if the replay answer is not valid.
-        *  ```6``` : INVALID_COLOR - Shown if the color is not valid.
 
 ## Messages examples
 
