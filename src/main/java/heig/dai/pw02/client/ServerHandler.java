@@ -3,6 +3,7 @@ package heig.dai.pw02.client;
 import heig.dai.pw02.ccp.CCPHandler;
 import heig.dai.pw02.ccp.CCPMessage;
 import heig.poo.chess.PlayerColor;
+
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 

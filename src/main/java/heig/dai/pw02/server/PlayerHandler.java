@@ -4,6 +4,7 @@ import heig.dai.pw02.ccp.CCPHandler;
 import heig.dai.pw02.ccp.CCPMessage;
 import heig.dai.pw02.ccp.Message;
 import heig.poo.chess.PlayerColor;
+
 import java.net.Socket;
 
 public final class PlayerHandler extends CCPHandler {

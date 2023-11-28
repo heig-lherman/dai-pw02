@@ -1,9 +1,11 @@
 package heig.dai.pw02.command;
 
 import heig.dai.pw02.server.ServerGamePool;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.Callable;
+
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -32,7 +34,7 @@ public class ServerCommand implements Callable<Integer> {
     public Integer call() {
         ServerGamePool pool = new ServerGamePool();
         log.info("Starting server on port {}", port);
-        try(var serverSocket = new ServerSocket(port)) {
+        try (var serverSocket = new ServerSocket(port)) {
             while (!serverSocket.isClosed()) {
                 try {
                     var clientSocket = serverSocket.accept();

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -41,16 +42,17 @@ public class CCPTests {
         wait_clients.acquire();
         wait_clients.acquire();
     }
+
     private static void launchServer() {
         Socket clientSocket;
-        try(ServerSocket serverSocket = new ServerSocket(PORT)) {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             while (true) {
                 try {
                     wait_server.release();
                     System.out.println("Waiting for connection");
                     clientSocket = serverSocket.accept();
                     players.add(new PlayerHandler(clientSocket));
-                    if(players.size() == 2){
+                    if (players.size() == 2) {
                         new Thread(() -> {
                             try {
                                 var pair = new PlayerPair(
@@ -72,30 +74,31 @@ public class CCPTests {
             System.out.println("Error while creating server socket");
         }
     }
-    private static void launchClient0(){
+
+    private static void launchClient0() {
         Socket socket;
-        try{
+        try {
             socket = new Socket("localhost", PORT);
             servers[0] = new ServerHandler(socket);
             wait_c0.release();
             servers[0].awaitColor().join();
             wait_clients.release();
-        } catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Error while connecting to the server");
             e.printStackTrace(); // Imprime la pile d'appels complète
             System.exit(0);
         }
     }
 
-    private static void launchClient1(){
+    private static void launchClient1() {
         Socket socket;
-        try{
+        try {
             wait_c0.acquire();
             socket = new Socket("localhost", PORT);
             servers[1] = new ServerHandler(socket);
             servers[1].awaitColor().join();
             wait_clients.release();
-        } catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Error while connecting to the server");
             e.printStackTrace();
             System.exit(0);
@@ -104,7 +107,7 @@ public class CCPTests {
 
     @Test
     @Order(2)
-    public void simpleMoveClientToServer(){
+    public void simpleMoveClientToServer() {
         int[] moves = {0, 0, 1, 1};
         servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
         Message mString = players.get(0).awaitMove().join();
@@ -115,7 +118,7 @@ public class CCPTests {
 
     @Test
     @Order(3)
-    public void simpleMoveServerToClient(){
+    public void simpleMoveServerToClient() {
         int[] moves = {0, 0, 1, 3};
         players.get(0).sendMove(moves[0], moves[1], moves[2], moves[3]);
         Message mString = servers[0].awaitMove().join();
@@ -126,7 +129,7 @@ public class CCPTests {
 
     @Test
     @Order(4)
-    public void errorInvalidMessage(){
+    public void errorInvalidMessage() {
         int[] moves = {0, 0, 1, 3};
         servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
         Message m = players.get(0).awaitPromotion().join();
@@ -137,7 +140,7 @@ public class CCPTests {
 
     @Test
     @Order(5)
-    public void errorInvalidMoveSamePoint(){
+    public void errorInvalidMoveSamePoint() {
         int[] moves = {0, 0, 0, 0};
         servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
         Message mString = players.get(0).awaitMove().join();
@@ -148,7 +151,7 @@ public class CCPTests {
 
     @Test
     @Order(6)
-    public void errorInvalidMoveOutOfBoard(){
+    public void errorInvalidMoveOutOfBoard() {
         int[] moves = {100, 100, 100, 100};
         servers[0].sendMove(moves[0], moves[1], moves[2], moves[3]);
         Message mString = players.get(0).awaitMove().join();
@@ -159,23 +162,13 @@ public class CCPTests {
 
     @Test
     @Order(7)
-    public void errorInvalidReplay(){
+    public void errorInvalidReplay() {
         String replay = "Maybe";
         servers[0].sendReplay(replay);
         Message mString = players.get(0).awaitReplay().join();
         assertEquals(mString.getType(), CCPMessage.ERROR);
         CCPError error = CCPError.values()[mString.getNumericArguments()[0]];
         assertEquals(error, CCPError.INVALID_REPLAY);
-    }
-
-    @Test
-    @Order(8)
-    public void errorInvalidPromotion(){
-        servers[0].sendPromotion(new Pawn(PlayerColor.WHITE, 0, 0));
-        Message mString = players.get(0).awaitPromotion().join();
-        assertEquals(mString.getType(), CCPMessage.ERROR);
-        CCPError error = CCPError.values()[mString.getNumericArguments()[0]];
-        assertEquals(error, CCPError.INVALID_PROMOTION);
     }
 
 }

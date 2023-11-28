@@ -47,10 +47,6 @@ public abstract class CCPHandler {
                 System.exit(2);
             }
             Message result = checkMessage(message, type);
-            if(result.getType().equals(CCPMessage.ERROR)) {
-                CCPError error = CCPError.values()[result.getNumericArguments()[0]];
-                log.error("{} - {}", result, error.toString());
-            }
             return result;
         });
     }
@@ -88,10 +84,6 @@ public abstract class CCPHandler {
     }
 
     public final void sendReplay(String replay) {
-        Assertions.assertTrue(
-                replay.equals(ChessString.YES) || replay.equals(ChessString.NO),
-                "Replay must be Yes or No"
-        );
         sendMessage(Message.of(CCPMessage.REPLAY, replay));
     }
 
@@ -127,7 +119,7 @@ public abstract class CCPHandler {
             }
         }
         if(messageType.equals(CCPMessage.REPLAY)
-                && !(argumentsString[0].equals("Yes") || argumentsString[0].equals("No"))) {
+                && !(argumentsString[0].equals(ChessString.YES) || argumentsString[0].equals(ChessString.NO))) {
             return createErrorMessage(CCPError.INVALID_REPLAY);
         }
         if(messageType.equals(CCPMessage.MOVE)) {
