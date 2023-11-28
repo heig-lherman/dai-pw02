@@ -19,6 +19,6 @@ public enum CCPError {
     }
 
     public String toString() {
-        return "Error: " + this.name() + " - " + this.description;
+        return this.name() + " - " + this.description;
     }
 }

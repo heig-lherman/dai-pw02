@@ -77,12 +77,8 @@ public abstract class CCPHandler {
 
     public Message createErrorMessage(CCPError error) {
         Message toReturn = Message.of(CCPMessage.ERROR, error.ordinal());
-        log.error("Received error message: {}", toReturn);
+        log.error("{} - {}", toReturn, error.toString());
         return toReturn;
-    }
-
-    private void handleErrorMessage(Message message) {
-        log.error("Received error message: {}", message);
     }
 
     /**
@@ -124,9 +120,6 @@ public abstract class CCPHandler {
             if (arguments[0] == arguments[2] && arguments[1] == arguments[3]) {
                 return createErrorMessage(CCPError.INVALID_MOVE);
             }
-        }
-        if(messageType.equals(CCPMessage.ERROR)) {
-            handleErrorMessage(message);
         }
         return message;
     }
