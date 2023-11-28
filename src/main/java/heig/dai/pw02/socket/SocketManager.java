@@ -1,5 +1,7 @@
 package heig.dai.pw02.socket;
 
+import heig.dai.pw02.ccp.CCPError;
+import heig.dai.pw02.ccp.CCPMessage;
 import heig.dai.pw02.ccp.Message;
 
 import java.io.BufferedReader;
@@ -67,13 +69,12 @@ public final class SocketManager implements Closeable {
             String line = input.readLine();
             log.debug("Received: {}", line);
             if (line == null) {
-                return null;
+                return Message.of(CCPMessage.ERROR, CCPError.DISCONNECTED.ordinal());
             }
             return Message.parse(line);
         } catch (IOException e) {
             log.warn("A client got disconnected");
-            System.exit(0);
+            return Message.of(CCPMessage.ERROR, CCPError.DISCONNECTED.ordinal());
         }
-        return null;
     }
 }

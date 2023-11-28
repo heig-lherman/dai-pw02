@@ -1,5 +1,6 @@
 package heig.dai.pw02.server;
 
+import heig.dai.pw02.ccp.CCPError;
 import heig.dai.pw02.ccp.CCPHandler;
 import heig.dai.pw02.ccp.CCPMessage;
 import heig.dai.pw02.ccp.Message;
@@ -15,5 +16,9 @@ public final class PlayerHandler extends CCPHandler {
 
     public void sendColor(PlayerColor color) {
         sendMessage(Message.of(CCPMessage.COLOR, color.name()));
+    }
+
+    public void sendError(CCPError error) {
+        sendMessage(Message.of(CCPMessage.ERROR, error.ordinal()));
     }
 }

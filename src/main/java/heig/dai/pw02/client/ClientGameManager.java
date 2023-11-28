@@ -1,5 +1,7 @@
 package heig.dai.pw02.client;
 
+import heig.dai.pw02.ccp.CCPError;
+import heig.dai.pw02.ccp.CCPMessage;
 import heig.dai.pw02.ccp.Message;
 import heig.poo.chess.ChessView;
 import heig.poo.chess.ChessView.UserChoice;
@@ -9,9 +11,7 @@ import heig.poo.chess.engine.GameManager;
 import heig.poo.chess.engine.piece.ChessPiece;
 import heig.poo.chess.engine.util.ChessString;
 import heig.poo.chess.views.gui.GUIView;
-
 import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -48,6 +48,13 @@ public class ClientGameManager extends GameManager {
     private void listenMove() {
         server.awaitMove().thenAccept(message -> {
             int[] parsedArgs = message.getNumericArguments();
+            if (message.getType().equals(CCPMessage.ERROR)
+                    && CCPError.values()[message.getNumericArguments()[0]].equals(CCPError.DISCONNECTED)) {
+                chessView.displayMessage("The other player disconnected. YOU WON!");
+                server.disconnect();
+                return;
+            }
+            
             remoteMove(parsedArgs[0], parsedArgs[1], parsedArgs[2], parsedArgs[3]);
         });
     }
